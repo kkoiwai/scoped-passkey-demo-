@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scoped Passkey Demo Bank</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <div class="container">
+    <!-- Navbar -->
+    <header class="navbar">
+      <div class="logo">
+        <span class="logo-icon">🏦</span>
+        <span>Scoped Demo Bank</span>
+      </div>
+      <div class="nav-actions">
+        <button id="btn-view-store" class="btn btn-secondary" style="padding: 8px 14px; font-size: 13px;">
+          📊 JSONストア確認
+        </button>
+        <div id="user-header-info" class="hidden" style="display: flex; align-items: center; gap: 10px;">
+          <span id="user-display-name" style="font-weight: 600; font-size: 14px;"></span>
+          <button id="btn-logout" class="btn btn-danger" style="padding: 8px 14px; font-size: 13px;">
+            ログアウト
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Global Alert / Notification -->
+    <div id="global-alert" class="alert alert-info hidden"></div>
+
+    <!-- ======================================================== -->
+    <!-- 1. AUTH SECTION (SIGN UP / SIGN IN) -->
+    <!-- ======================================================== -->
+    <section id="auth-section">
+      <div class="card" style="max-width: 500px; margin: 40px auto;">
+        <div class="card-header" style="justify-content: center; flex-direction: column; text-align: center;">
+          <h2 class="card-title" style="font-size: 24px;">口座開設 & ログイン</h2>
+          <p style="color: var(--text-muted); font-size: 14px; margin-top: 6px;">
+            パスキーによる生体認証・セキュリティキー認証
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+          <button id="tab-login" class="btn btn-primary" style="flex: 1;">ログイン</button>
+          <button id="tab-signup" class="btn btn-secondary" style="flex: 1;">新規口座開設</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="login-form-container">
+          <div class="alert alert-info" style="margin-bottom: 16px;">
+            💡 作成済みの任意のパスキー（マスター・閲覧専用・金額限定）でログインできます。
+          </div>
+          <button id="btn-login-passkey" class="btn btn-primary btn-lg" style="margin-top: 10px;">
+            🔑 パスキーでログイン
+          </button>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signup-form-container" class="hidden">
+          <div class="alert alert-success" style="margin-bottom: 16px;">
+            🎉 新規登録すると初期残高 <strong>¥100,000</strong> が付与され、最初の<strong>フル権限マスターパスキー</strong>が作成されます。
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="signup-username">メールアドレス / ユーザー名</label>
+            <input type="text" id="signup-username" class="form-input" placeholder="alice@example.com" value="alice@example.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="signup-displayname">お名前 (表示名)</label>
+            <input type="text" id="signup-displayname" class="form-input" placeholder="Alice" value="Alice">
+          </div>
+          <button id="btn-signup-passkey" class="btn btn-success btn-lg" style="margin-top: 10px;">
+            ✨ パスキーを作成して口座開設 (¥100,000 付与)
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- 2. DASHBOARD SECTION (LOGGED IN) -->
+    <!-- ======================================================== -->
+    <section id="dashboard-section" class="hidden">
+      
+      <!-- Active Passkey & Scope Banner -->
+      <div id="scope-status-banner" class="alert" style="margin-bottom: 20px;">
+        <span style="font-size: 24px;" id="scope-banner-icon">🛡️</span>
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <strong id="scope-banner-title">ログイン中パスキー権限</strong>
+            <span id="scope-banner-badge" class="scope-badge"></span>
+          </div>
+          <p id="scope-banner-desc" style="margin-top: 4px; font-size: 13px;"></p>
+        </div>
+      </div>
+
+      <!-- Balance Card -->
+      <div class="balance-card">
+        <div class="balance-label">普通預金 残高</div>
+        <div class="balance-amount" id="user-balance">¥100,000</div>
+        <div class="active-passkey-info">
+          <span>🔑 認証デバイス: <strong id="active-passkey-name">-</strong></span>
+        </div>
+      </div>
+
+      <!-- Dashboard Navigation Tabs -->
+      <div class="dashboard-tabs" role="tablist">
+        <button class="dashboard-tab-btn active" id="btn-tab-transfer" data-tab="tab-content-transfer" role="tab" aria-selected="true">
+          💸 お振込み (送金)
+        </button>
+        <button class="dashboard-tab-btn" id="btn-tab-passkeys" data-tab="tab-content-passkeys" role="tab" aria-selected="false">
+          🔑 パスキー管理
+        </button>
+        <button class="dashboard-tab-btn" id="btn-tab-history" data-tab="tab-content-history" role="tab" aria-selected="false">
+          📜 取引履歴
+        </button>
+      </div>
+
+      <!-- Tab Content 1: Transfer (振込) Card -->
+      <div id="tab-content-transfer" class="dashboard-tab-content active">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">💸 お振込み (送金)</h3>
+          </div>
+
+          <div id="transfer-scope-warning" class="alert alert-warning hidden" style="margin-bottom: 16px;"></div>
+
+          <form id="transfer-form">
+            <div class="form-group">
+              <label class="form-label" for="transfer-recipient">振込先口座・名義</label>
+              <input type="text" id="transfer-recipient" class="form-input" placeholder="ボブ (三井住友 / 1234567)" value="ボブ (受取人口座)" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="transfer-amount">送金金額 (円)</label>
+              <input type="number" id="transfer-amount" class="form-input" placeholder="3000" min="1" value="3000" required>
+              <div id="transfer-limit-hint" class="form-helper"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="transfer-desc">摘要 (任意)</label>
+              <input type="text" id="transfer-desc" class="form-input" placeholder="ランチ代立替" value="お振込み">
+            </div>
+
+            <button type="submit" id="btn-submit-transfer" class="btn btn-primary btn-lg" style="margin-top: 8px;">
+              💸 送金を実行する
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tab Content 2: Passkey Management Card -->
+      <div id="tab-content-passkeys" class="dashboard-tab-content">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🔑 登録済みパスキー一覧</h3>
+            <button id="btn-open-add-passkey" class="btn btn-primary" style="padding: 8px 14px; font-size: 13px;">
+              ➕ パスキー追加
+            </button>
+          </div>
+
+          <div id="add-passkey-scope-notice" class="alert alert-warning hidden" style="margin-bottom: 14px; font-size: 12px;">
+            ⚠️ パスキーの追加設定は<strong>フル権限パスキー</strong>でログイン時のみ可能です。
+          </div>
+
+          <ul id="passkey-list" class="passkey-list">
+            <!-- Dynamically populated -->
+          </ul>
+        </div>
+      </div>
+
+      <!-- Tab Content 3: Transaction History Card -->
+      <div id="tab-content-history" class="dashboard-tab-content">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📜 取引履歴 (明細一覧)</h3>
+            <span style="font-size: 13px; color: var(--text-muted);">全権限で閲覧可能</span>
+          </div>
+          <ul id="tx-list" class="tx-list">
+            <!-- Dynamically populated -->
+          </ul>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- 3. ADD PASSKEY MODAL (WEB SCOPED CREATION) -->
+    <!-- ======================================================== -->
+    <div id="modal-add-passkey" class="modal-overlay">
+      <div class="modal">
+        <div class="card-header">
+          <h3 class="card-title">🔑 新しいパスキーの追加設定</h3>
+          <button id="btn-close-modal-passkey" class="btn btn-secondary" style="padding: 6px 12px;">✕</button>
+        </div>
+
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">
+          用途に合わせてこのパスキーに付与する<strong>権限スコープ</strong>を選択してください。
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="new-passkey-name">パスキーの表示名 (端末名など)</label>
+          <input type="text" id="new-passkey-name" class="form-input" placeholder="例: 会社のPC (閲覧用)" value="サブ端末パスキー">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">権限スコープ (Scope)</label>
+          
+          <!-- Full Scope -->
+          <label class="scope-option-card selected" id="opt-scope-full">
+            <input type="radio" name="passkey_scope" value="full" checked>
+            <div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <strong>🟢 フル権限 (Full Access)</strong>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                無制限の送金、履歴閲覧、新しいパスキー追加などすべての操作が可能です。
+              </p>
+            </div>
+          </label>
+
+          <!-- Read Only Scope -->
+          <label class="scope-option-card" id="opt-scope-readonly">
+            <input type="radio" name="passkey_scope" value="read_only">
+            <div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <strong>🔵 取引履歴の閲覧のみ (Read Only)</strong>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                残高・取引明細の確認のみ可能。送金やパスキー追加はブロックされます。
+              </p>
+            </div>
+          </label>
+
+          <!-- Limited Transfer Scope -->
+          <label class="scope-option-card" id="opt-scope-limited">
+            <input type="radio" name="passkey_scope" value="limited_transfer">
+            <div style="width: 100%;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <strong>🟡 金額限定送金 (Limited Transfer)</strong>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                設定した上限金額までの送金が可能。上限超えの送金やパスキー追加は不可。
+              </p>
+              <div id="container-limit-input" class="hidden" style="margin-top: 10px;">
+                <label class="form-label" style="font-size: 12px;">1回あたりの送金上限額 (円):</label>
+                <input type="number" id="new-passkey-limit" class="form-input" value="5000" min="100" step="100">
+              </div>
+            </div>
+          </label>
+        </div>
+
+        <button id="btn-create-scoped-passkey" class="btn btn-success btn-lg" style="margin-top: 10px;">
+          🛡️ この権限でパスキーを発行・登録
+        </button>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- 4. JSON DATA STORE VIEWER MODAL -->
+    <!-- ======================================================== -->
+    <div id="modal-store-viewer" class="modal-overlay">
+      <div class="modal" style="max-width: 720px;">
+        <div class="card-header">
+          <h3 class="card-title">📊 インメモリ JSON データストア</h3>
+          <button id="btn-close-modal-store" class="btn btn-secondary" style="padding: 6px 12px;">✕</button>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+          ユーザー、パスキー、残高、取引履歴、OAuth セッションが全て 1 つの JSON で管理されています。
+        </p>
+        <pre id="store-json-content" style="background: #0f172a; color: #38bdf8; padding: 16px; border-radius: 10px; font-family: monospace; font-size: 12px; overflow-x: auto; max-height: 480px;"></pre>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      Scoped Passkey Demo Bank &bull; Tim Cappalli Spec &bull; GCP Cloud Run Ready (<code>sp.exarnp1e.com</code>)
+    </footer>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

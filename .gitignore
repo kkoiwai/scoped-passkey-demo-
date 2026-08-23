@@ -34,3 +34,13 @@ google-services.json
 
 .DS_Store
 
+# Node.js / Web ignores
+web/node_modules/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env.local
+web/data/store.json
+

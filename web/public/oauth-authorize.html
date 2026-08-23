@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>パスキー発行の認可 - Scoped Passkey Bank</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    body {
+      background: #f8fafc;
+      padding: 16px;
+      color: #0f172a;
+    }
+    .auth-container {
+      max-width: 520px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 32px;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px -15px rgba(0,0,0,0.12);
+      border: 1px solid #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="auth-container">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <span style="font-size: 48px;">🏦</span>
+      <h2 style="font-size: 22px; font-weight: 800; margin-top: 8px;">Scoped Passkey Bank</h2>
+      <p style="font-size: 14px; color: var(--text-muted); margin-top: 4px;">
+        Android クライアントへのパスキー発行認可
+      </p>
+    </div>
+
+    <!-- Alert -->
+    <div id="auth-alert" class="alert alert-info hidden"></div>
+
+    <!-- Step A: Authenticate with Existing Passkey (if not logged in) -->
+    <div id="step-auth-needed" class="hidden">
+      <div class="alert alert-warning" style="margin-bottom: 20px;">
+        🔐 端末にパスキーを発行する前に、まず登録済みの既存パスキーでご本人確認を行ってください。
+      </div>
+      <button id="btn-login-first" class="btn btn-primary btn-lg">
+        🔑 既存パスキーで認証する
+      </button>
+    </div>
+
+    <!-- Step B: Scope Selection & Grant Consent -->
+    <div id="step-grant-consent" class="hidden">
+      <div class="alert alert-success" style="margin-bottom: 20px;">
+        👤 認証済みアカウント: <strong id="auth-username">-</strong>
+      </div>
+
+      <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 12px;">
+        📱 アプリに付与するパスキー権限を選択
+      </h3>
+
+      <div class="form-group">
+        <!-- Full Scope -->
+        <label class="scope-option-card" id="oauth-opt-full">
+          <input type="radio" name="oauth_scope" value="full">
+          <div>
+            <strong>🟢 フル権限 (Full Access)</strong>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              送金制限なし・パスキー管理を含む全機能を利用可能。
+            </p>
+          </div>
+        </label>
+
+        <!-- Read Only Scope -->
+        <label class="scope-option-card" id="oauth-opt-readonly">
+          <input type="radio" name="oauth_scope" value="read_only">
+          <div>
+            <strong>🔵 取引履歴の閲覧のみ (Read Only)</strong>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              残高と明細の確認のみ。送金は一切不可。
+            </p>
+          </div>
+        </label>
+
+        <!-- Limited Transfer Scope (Default for Demo) -->
+        <label class="scope-option-card selected" id="oauth-opt-limited">
+          <input type="radio" name="oauth_scope" value="limited_transfer" checked>
+          <div style="width: 100%;">
+            <strong>🟡 金額限定送金 (Limited Transfer)</strong>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              設定した上限金額までの送金を許可（デモおすすめ）。
+            </p>
+            <div id="oauth-limit-container" style="margin-top: 10px;">
+              <label class="form-label" style="font-size: 12px;">送金上限額 (円):</label>
+              <input type="number" id="oauth-transfer-limit" class="form-input" value="5000" min="100" step="500">
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <div class="form-group" style="margin-top: 16px;">
+        <label class="form-label" for="oauth-passkey-name">パスキー端末名</label>
+        <input type="text" id="oauth-passkey-name" class="form-input" value="MyCredentialManager (Android)">
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 24px;">
+        <button id="btn-authorize-grant" class="btn btn-success btn-lg" style="background: #16a34a;">
+          ✅ 認可してパスキーを発行
+        </button>
+        <button id="btn-authorize-cancel" class="btn btn-secondary btn-lg">
+          ✕ キャンセル
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Parse query params
+    const params = new URLSearchParams(window.location.search);
+    const clientId = params.get('client_id') || 'mycredman-client';
+    const redirectUri = params.get('redirect_uri') || 'mycredman://oauth/callback';
+    const codeChallenge = params.get('code_challenge') || '';
+    const codeChallengeMethod = params.get('code_challenge_method') || 'S256';
+    const state = params.get('state') || '';
+
+    const alertEl = document.getElementById('auth-alert');
+    const stepAuthNeeded = document.getElementById('step-auth-needed');
+    const stepGrantConsent = document.getElementById('step-grant-consent');
+    const authUsernameEl = document.getElementById('auth-username');
+
+    function showAlert(message, type = 'info') {
+      alertEl.className = `alert alert-${type}`;
+      alertEl.textContent = message;
+      alertEl.classList.remove('hidden');
+    }
+
+    // Radio option cards styling
+    document.querySelectorAll('.scope-option-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.scope-option-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        const radio = card.querySelector('input[type="radio"]');
+        if (radio) {
+          radio.checked = true;
+          const limitContainer = document.getElementById('oauth-limit-container');
+          if (radio.value === 'limited_transfer') {
+            limitContainer?.classList.remove('hidden');
+          } else {
+            limitContainer?.classList.add('hidden');
+          }
+        }
+      });
+    });
+
+    function getScopeLabel(scope) {
+      if (scope === 'read_only') return '閲覧専用 (Read Only)';
+      if (scope === 'limited_transfer') return '金額限定送金 (Limited Transfer)';
+      return 'フル権限 (Full Access)';
+    }
+
+    // Check Session
+    async function checkSession() {
+      try {
+        const res = await fetch('/api/session');
+        const data = await res.json();
+        if (data.loggedIn && data.user) {
+          if (data.activeScope === 'full') {
+            authUsernameEl.textContent = `${data.user.displayName} (${data.user.username})`;
+            stepAuthNeeded.classList.add('hidden');
+            stepGrantConsent.classList.remove('hidden');
+          } else {
+            // Logged in with non-full passkey
+            stepAuthNeeded.classList.remove('hidden');
+            stepGrantConsent.classList.add('hidden');
+            showAlert(`【権限不足】現在「${getScopeLabel(data.activeScope)}」のパスキーでログインしています。新しいパスキーの発行認可を行うには、「フル権限」のマスターパスキーで認証してください。`, 'danger');
+          }
+        } else {
+          stepAuthNeeded.classList.remove('hidden');
+          stepGrantConsent.classList.add('hidden');
+        }
+      } catch (err) {
+        showAlert('セッションの確認に失敗しました: ' + err.message, 'danger');
+      }
+    }
+
+    // Authenticate with Passkey directly on authorize page
+    document.getElementById('btn-login-first').addEventListener('click', async () => {
+      try {
+        showAlert('パスキーを呼び出しています...', 'info');
+        const optRes = await fetch('/api/auth/login-options', { method: 'POST' });
+        const options = await optRes.json();
+
+        // Convert base64url challenge to ArrayBuffer
+        options.challenge = base64UrlToBuffer(options.challenge);
+        if (options.allowCredentials) {
+          options.allowCredentials = options.allowCredentials.map(c => ({
+            ...c,
+            id: base64UrlToBuffer(c.id)
+          }));
+        }
+
+        const cred = await navigator.credentials.get({ publicKey: options });
+        const credJson = {
+          id: cred.id,
+          rawId: bufferToBase64Url(cred.rawId),
+          response: {
+            clientDataJSON: bufferToBase64Url(cred.response.clientDataJSON),
+            authenticatorData: bufferToBase64Url(cred.response.authenticatorData),
+            signature: bufferToBase64Url(cred.response.signature),
+            userHandle: cred.response.userHandle ? bufferToBase64Url(cred.response.userHandle) : null
+          },
+          type: cred.type
+        };
+
+        const verifyRes = await fetch('/api/auth/login-verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: credJson })
+        });
+
+        // Signal API: If credential is unknown on server (404), remove it from authenticator
+        if (verifyRes.status === 404) {
+          if (window.PublicKeyCredential && typeof PublicKeyCredential.signalUnknownCredential === 'function') {
+            try {
+              await PublicKeyCredential.signalUnknownCredential({
+                rpId: window.location.hostname,
+                credentialId: credJson.id
+              });
+              showAlert('⚠️ サーバー上に存在しないパスキーのため、Signal API により端末から削除シグナルを送信しました。', 'warning');
+              return;
+            } catch (e) {
+              console.warn('[Signal API] signalUnknownCredential error:', e);
+            }
+          }
+          showAlert('このパスキーはサーバー上に登録されていません。', 'danger');
+          return;
+        }
+
+        const verifyData = await verifyRes.json();
+
+        if (verifyData.success) {
+          if (verifyData.scope === 'full') {
+            showAlert('フル権限での認証に成功しました！発行する権限を選択してください。', 'success');
+            checkSession();
+          } else {
+            showAlert(`【権限エラー】認証に使用されたパスキーは「${getScopeLabel(verifyData.scope)}」です。パスキーの発行認可を行うには、「フル権限」のマスターパスキーで認証してください。`, 'danger');
+            checkSession();
+          }
+        } else {
+          showAlert(verifyData.error || '認証に失敗しました。', 'danger');
+        }
+      } catch (err) {
+        showAlert('認証エラー: ' + err.message, 'danger');
+      }
+    });
+
+    // Grant Consent and Redirect
+    document.getElementById('btn-authorize-grant').addEventListener('click', async () => {
+      try {
+        const selectedScope = document.querySelector('input[name="oauth_scope"]:checked')?.value || 'limited_transfer';
+        const transferLimit = document.getElementById('oauth-transfer-limit').value || '5000';
+        const passkeyName = document.getElementById('oauth-passkey-name').value || 'Android Passkey';
+
+        showAlert('認可コードを発行しています...', 'info');
+
+        const res = await fetch('/oauth/consent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientId,
+            redirectUri,
+            codeChallenge,
+            codeChallengeMethod,
+            state,
+            scope: selectedScope,
+            transferLimit: parseInt(transferLimit, 10),
+            passkeyName
+          })
+        });
+
+        const data = await res.json();
+        if (data.success && data.redirectUrl) {
+          showAlert('Android アプリへリダイレクト中...', 'success');
+          window.location.href = data.redirectUrl;
+        } else {
+          showAlert(data.error || '認可コードの発行に失敗しました。', 'danger');
+        }
+      } catch (err) {
+        showAlert('エラー: ' + err.message, 'danger');
+      }
+    });
+
+    // Cancel Button
+    document.getElementById('btn-authorize-cancel').addEventListener('click', () => {
+      const cancelUrl = `${redirectUri}?error=access_denied&error_description=User+cancelled+authorization&state=${encodeURIComponent(state)}`;
+      window.location.href = cancelUrl;
+    });
+
+    // Helpers
+    function base64UrlToBuffer(base64url) {
+      const padding = '='.repeat((4 - (base64url.length % 4)) % 4);
+      const base64 = (base64url + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      const buffer = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; i++) buffer[i] = rawData.charCodeAt(i);
+      return buffer.buffer;
+    }
+
+    function bufferToBase64Url(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+      return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+
+    // Run
+    checkSession();
+  </script>
+</body>
+</html>

@@ -44,6 +44,22 @@ import com.example.mycredman.ui.theme.MyCredManTheme
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import androidx.activity.result.ActivityResultLauncher
+import androidx.browser.auth.AuthTabIntent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.mycredman.provisioning.AuthConfig
+import com.example.mycredman.provisioning.PasskeyProvisioningScreen
+import com.example.mycredman.provisioning.PasskeyProvisioningViewModel
 import java.math.BigInteger
 import java.security.KeyPair
 import java.security.KeyPairGenerator
@@ -59,10 +75,19 @@ class MainActivity : AppCompatActivity() {
 
     private val EXTRA_KEY_ACCOUNT_ID  = "com.example.mycredman.extra.EXTRA_KEY_ACCOUNT_ID"
 
+    private lateinit var authTabLauncher: ActivityResultLauncher<Intent>
+    private val provisioningViewModel: PasskeyProvisioningViewModel by lazy {
+        PasskeyProvisioningViewModel()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // Register ActivityResultLauncher for AuthTabIntent
+        authTabLauncher = AuthTabIntent.registerActivityResultLauncher(this) { result ->
+            provisioningViewModel.handleAuthTabCallback(this, result)
+        }
 
         if(intent != null && intent.action == "com.example.mycredman.action.CREATE_PASSKEY") {
             val request =
@@ -123,6 +148,22 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
+        // Check if intent contains OAuth redirect on initial launch
+        intent?.data?.let { uri ->
+            if (uri.scheme == AuthConfig.REDIRECT_SCHEME) {
+                provisioningViewModel.handleRedirectUri(this, uri)
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.data?.let { uri ->
+            if (uri.scheme == AuthConfig.REDIRECT_SCHEME) {
+                provisioningViewModel.handleRedirectUri(this, uri)
+            }
+        }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -130,24 +171,65 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         setContent {
             MyCredManTheme {
+                var selectedTabIndex by remember { mutableIntStateOf(0) }
+                val uiState by provisioningViewModel.uiState.collectAsState()
                 val credentialList = MyCredentialDataManager.loadAll(this@MainActivity)
-                if (credentialList.size > 0) {
-                    Column {
-                        TopAppBar(
-                            title = { Text(text = "My Credential Manager") },
-                        )
-                        CredentialList(credentialList)
 
+                Scaffold(
+                    topBar = {
+                        Column {
+                            TopAppBar(
+                                title = { Text(text = "My Credential Manager") },
+                            )
+                            TabRow(selectedTabIndex = selectedTabIndex) {
+                                Tab(
+                                    selected = selectedTabIndex == 0,
+                                    onClick = { selectedTabIndex = 0 },
+                                    text = { Text("🔑 パスキー発行") }
+                                )
+                                Tab(
+                                    selected = selectedTabIndex == 1,
+                                    onClick = { selectedTabIndex = 1 },
+                                    text = { Text("📋 保存済み (${credentialList.size})") }
+                                )
+                            }
+                        }
                     }
-                } else {
-                    Column {
-                        TopAppBar(
-                            title = { Text(text = "My Credential Manager") },
-                        )
-                        Text("No Credential Yet", color = MaterialTheme.colorScheme.primary)
+                ) { innerPadding ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                    ) {
+                        when (selectedTabIndex) {
+                            0 -> {
+                                PasskeyProvisioningScreen(
+                                    uiState = uiState,
+                                    onStartProvisioning = {
+                                        provisioningViewModel.startProvisioning(authTabLauncher)
+                                    },
+                                    onReset = {
+                                        provisioningViewModel.resetState()
+                                    }
+                                )
+                            }
+                            1 -> {
+                                if (credentialList.isNotEmpty()) {
+                                    CredentialList(credentialList)
+                                } else {
+                                    Column(
+                                        modifier = Modifier.padding(24.dp)
+                                    ) {
+                                        Text(
+                                            "保存されたパスキーはまだありません。",
+                                            color = MaterialTheme.colorScheme.secondary
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-
             }
         }
     }
