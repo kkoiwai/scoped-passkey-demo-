@@ -40,6 +40,7 @@ const i18n = {
     labelSignupDisplayName: 'お名前 (表示名)',
     btnSignupPasskey: '✨ パスキーを作成して口座開設 (¥100,000 付与)',
     balanceTitleLabel: '普通預金 残高',
+    scopeBannerTitle: 'ログイン中パスキー権限',
     authDevicePrefix: '🔑 認証デバイス: ',
     tabTransfer: '💸 お振込み (送金)',
     tabPasskeys: '🔑 パスキー管理',
@@ -133,6 +134,7 @@ const i18n = {
     labelSignupDisplayName: 'Full Name (Display Name)',
     btnSignupPasskey: '✨ Create Passkey & Open Account (¥100,000 Bonus)',
     balanceTitleLabel: 'Savings Balance',
+    scopeBannerTitle: 'Active Passkey Scope',
     authDevicePrefix: '🔑 Authenticated Device: ',
     tabTransfer: '💸 Transfer Funds',
     tabPasskeys: '🔑 Passkey Management',
@@ -214,6 +216,33 @@ const i18n = {
 
 const t = isJa ? i18n.ja : i18n.en;
 
+function formatTxDescription(desc) {
+  if (!desc) return '';
+  if (desc === '口座開設ボーナス (初期残高)' || desc.includes('口座開設ボーナス')) {
+    return isJa ? '口座開設ボーナス (初期残高)' : 'Account Opening Bonus (Initial Balance)';
+  }
+  if (desc === 'お振込み') {
+    return isJa ? 'お振込み' : 'Bank Transfer';
+  }
+  return desc;
+}
+
+function formatRecipient(rec) {
+  if (!rec || rec === '-') return '-';
+  if (rec === 'ボブ (受取人口座)') {
+    return isJa ? 'ボブ (受取人口座)' : 'Bob (Recipient Account)';
+  }
+  return rec;
+}
+
+function formatPasskeyName(name) {
+  if (!name) return isJa ? 'Web パスキー' : 'Web Passkey';
+  if (name === 'マスターパスキー (初期作成)') {
+    return isJa ? 'マスターパスキー (初期作成)' : 'Master Passkey (Initial)';
+  }
+  return name;
+}
+
 // -------------------------------------------------------------
 // Initialize Static DOM Texts
 // -------------------------------------------------------------
@@ -233,6 +262,8 @@ function applyStaticTranslations() {
   document.getElementById('label-signup-displayname').textContent = t.labelSignupDisplayName;
   document.getElementById('btn-signup-passkey').textContent = t.btnSignupPasskey;
   document.getElementById('balance-title-label').textContent = t.balanceTitleLabel;
+  const scopeBannerTitleEl = document.getElementById('scope-banner-title');
+  if (scopeBannerTitleEl) scopeBannerTitleEl.textContent = t.scopeBannerTitle;
   document.getElementById('auth-device-prefix').textContent = t.authDevicePrefix;
   document.getElementById('btn-tab-transfer').textContent = t.tabTransfer;
   document.getElementById('btn-tab-passkeys').textContent = t.tabPasskeys;
@@ -409,7 +440,7 @@ function renderDashboard(data) {
 
   userDisplayName.textContent = `${data.user.displayName} (${data.user.username})`;
   userBalanceEl.textContent = `¥${(data.balance || 0).toLocaleString()}`;
-  activePasskeyNameEl.textContent = data.activePasskey ? data.activePasskey.name : (isJa ? 'Web パスキー' : 'Web Passkey');
+  activePasskeyNameEl.textContent = formatPasskeyName(data.activePasskey ? data.activePasskey.name : null);
 
   const scope = data.activeScope || 'full';
   const transferLimit = data.transferLimit;
@@ -524,9 +555,9 @@ function renderTransactions(transactions) {
           ${isDeposit ? '📥' : '💸'}
         </div>
         <div>
-          <div style="font-weight: 700; font-size: 15px;">${escapeHtml(tx.description)} ${scopeTag}</div>
+          <div style="font-weight: 700; font-size: 15px;">${escapeHtml(formatTxDescription(tx.description))} ${scopeTag}</div>
           <div style="font-size: 12px; color: var(--text-muted);">
-            ${t.txRecipientPrefix}${escapeHtml(tx.recipient)} &bull; ${new Date(tx.timestamp).toLocaleString()}
+            ${t.txRecipientPrefix}${escapeHtml(formatRecipient(tx.recipient))} &bull; ${new Date(tx.timestamp).toLocaleString(isJa ? 'ja-JP' : 'en-US')}
           </div>
         </div>
       </div>
@@ -561,11 +592,11 @@ function renderPasskeys(passkeys, activeScope) {
         <span style="font-size: 24px;">🔑</span>
         <div>
           <div style="font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px;">
-            ${escapeHtml(p.name)}
+            ${escapeHtml(formatPasskeyName(p.name))}
             ${scopeBadge}
           </div>
           <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
-            ID: ${p.id.substring(0, 16)}... &bull; ${createdLabel}: ${new Date(p.createdAt).toLocaleDateString()}
+            ID: ${p.id.substring(0, 16)}... &bull; ${createdLabel}: ${new Date(p.createdAt).toLocaleDateString(isJa ? 'ja-JP' : 'en-US')}
           </div>
         </div>
       </div>
