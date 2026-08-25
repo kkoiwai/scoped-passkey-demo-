@@ -24,6 +24,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -121,11 +122,6 @@ class MainActivity : AppCompatActivity() {
             Log.d("MainActivity", "onCreate rpid:${requestJson.rpId}")
             Log.d("MainActivity", "${credIdEnc}")
 
-// Get the saved passkey from your database based on the credential ID
-// from the publickeyRequest
-
-// Decode the credential ID, private key and user ID
-
             val credId = CredmanUtils.b64Decode(credIdEnc)
             val rpid = CredmanUtils.validateRpId(getRequest.callingAppInfo,requestJson.rpId)
             val passkey = MyCredentialDataManager.load(this,rpid,credId!!)
@@ -179,18 +175,18 @@ class MainActivity : AppCompatActivity() {
                     topBar = {
                         Column {
                             TopAppBar(
-                                title = { Text(text = "My Credential Manager") },
+                                title = { Text(text = stringResource(R.string.app_name)) },
                             )
                             TabRow(selectedTabIndex = selectedTabIndex) {
                                 Tab(
                                     selected = selectedTabIndex == 0,
                                     onClick = { selectedTabIndex = 0 },
-                                    text = { Text("🔑 パスキー発行") }
+                                    text = { Text(stringResource(R.string.tab_provisioning)) }
                                 )
                                 Tab(
                                     selected = selectedTabIndex == 1,
                                     onClick = { selectedTabIndex = 1 },
-                                    text = { Text("📋 保存済み (${credentialList.size})") }
+                                    text = { Text(stringResource(R.string.tab_saved_passkeys, credentialList.size)) }
                                 )
                             }
                         }
@@ -221,7 +217,7 @@ class MainActivity : AppCompatActivity() {
                                         modifier = Modifier.padding(24.dp)
                                     ) {
                                         Text(
-                                            "保存されたパスキーはまだありません。",
+                                            stringResource(R.string.no_saved_passkeys),
                                             color = MaterialTheme.colorScheme.secondary
                                         )
                                     }

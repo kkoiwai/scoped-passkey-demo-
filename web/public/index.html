@@ -13,7 +13,7 @@
     <header class="navbar">
       <div class="logo">
         <span class="logo-icon">🏦</span>
-        <span>Scoped Demo Bank</span>
+        <span id="nav-bank-name">Scoped Demo Bank</span>
       </div>
       <div class="nav-actions">
         <div id="user-header-info" class="hidden" style="display: flex; align-items: center; gap: 10px;">
@@ -34,8 +34,8 @@
     <section id="auth-section">
       <div class="card" style="max-width: 500px; margin: 40px auto;">
         <div class="card-header" style="justify-content: center; flex-direction: column; text-align: center;">
-          <h2 class="card-title" style="font-size: 24px;">口座開設 & ログイン</h2>
-          <p style="color: var(--text-muted); font-size: 14px; margin-top: 6px;">
+          <h2 id="auth-title" class="card-title" style="font-size: 24px;">口座開設 & ログイン</h2>
+          <p id="auth-subtitle" style="color: var(--text-muted); font-size: 14px; margin-top: 6px;">
             パスキーによる生体認証・セキュリティキー認証
           </p>
         </div>
@@ -47,10 +47,10 @@
 
         <!-- Login Form -->
         <div id="login-form-container">
-          <div class="alert alert-info" style="margin-bottom: 16px;">
+          <div id="login-alert-info" class="alert alert-info" style="margin-bottom: 16px;">
             💡 作成済みの任意のパスキー（マスター・閲覧専用・金額限定）でログインできます。
           </div>
-          <div class="alert alert-warning" style="margin-bottom: 16px; font-size: 12px; line-height: 1.5;">
+          <div id="ephemeral-alert-info" class="alert alert-warning" style="margin-bottom: 16px; font-size: 12px; line-height: 1.5;">
             ⚠️ <strong>PoCデモ環境の注意点:</strong> 本サービスは検証用のインメモリデータストアで動作しているため、アクセスが途切れて約5分経過するとサーバーのアイドル停止によりデータ（登録パスキー・残高）が自動消去されます。ログインできない場合は「新規口座開設」をお試しください。
           </div>
           <button id="btn-login-passkey" class="btn btn-primary btn-lg" style="margin-top: 10px;">
@@ -60,15 +60,15 @@
 
         <!-- Signup Form -->
         <div id="signup-form-container" class="hidden">
-          <div class="alert alert-success" style="margin-bottom: 16px;">
+          <div id="signup-alert-info" class="alert alert-success" style="margin-bottom: 16px;">
             🎉 新規登録すると初期残高 <strong>¥100,000</strong> が付与され、最初の<strong>フル権限マスターパスキー</strong>が作成されます。
           </div>
           <div class="form-group">
-            <label class="form-label" for="signup-username">メールアドレス / ユーザー名</label>
+            <label id="label-signup-username" class="form-label" for="signup-username">メールアドレス / ユーザー名</label>
             <input type="text" id="signup-username" class="form-input" placeholder="alice@example.com" value="alice@example.com">
           </div>
           <div class="form-group">
-            <label class="form-label" for="signup-displayname">お名前 (表示名)</label>
+            <label id="label-signup-displayname" class="form-label" for="signup-displayname">お名前 (表示名)</label>
             <input type="text" id="signup-displayname" class="form-input" placeholder="Alice" value="Alice">
           </div>
           <button id="btn-signup-passkey" class="btn btn-success btn-lg" style="margin-top: 10px;">
@@ -97,10 +97,10 @@
 
       <!-- Balance Card -->
       <div class="balance-card">
-        <div class="balance-label">普通預金 残高</div>
+        <div id="balance-title-label" class="balance-label">普通預金 残高</div>
         <div class="balance-amount" id="user-balance">¥100,000</div>
         <div class="active-passkey-info">
-          <span>🔑 認証デバイス: <strong id="active-passkey-name">-</strong></span>
+          <span><span id="auth-device-prefix">🔑 認証デバイス: </span><strong id="active-passkey-name">-</strong></span>
         </div>
       </div>
 
@@ -121,24 +121,24 @@
       <div id="tab-content-transfer" class="dashboard-tab-content active">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">💸 お振込み (送金)</h3>
+            <h3 id="transfer-card-title" class="card-title">💸 お振込み (送金)</h3>
           </div>
 
           <div id="transfer-scope-warning" class="alert alert-warning hidden" style="margin-bottom: 16px;"></div>
 
           <form id="transfer-form">
             <div class="form-group">
-              <label class="form-label" for="transfer-recipient">振込先口座・名義</label>
-              <input type="text" id="transfer-recipient" class="form-input" placeholder="ボブ (三井住友 / 1234567)" value="ボブ (受取人口座)" required>
+              <label id="label-transfer-recipient" class="form-label" for="transfer-recipient">振込先口座・名義</label>
+              <input type="text" id="transfer-recipient" class="form-input" placeholder="ボブ (受取人口座)" value="ボブ (受取人口座)" required>
             </div>
             <div class="form-group">
-              <label class="form-label" for="transfer-amount">送金金額 (円)</label>
+              <label id="label-transfer-amount" class="form-label" for="transfer-amount">送金金額 (円)</label>
               <input type="number" id="transfer-amount" class="form-input" placeholder="3000" min="1" value="3000" required>
               <div id="transfer-limit-hint" class="form-helper"></div>
             </div>
             <div class="form-group">
-              <label class="form-label" for="transfer-desc">摘要 (任意)</label>
-              <input type="text" id="transfer-desc" class="form-input" placeholder="ランチ代立替" value="お振込み">
+              <label id="label-transfer-desc" class="form-label" for="transfer-desc">摘要 (任意)</label>
+              <input type="text" id="transfer-desc" class="form-input" placeholder="お振込み" value="お振込み">
             </div>
 
             <button type="submit" id="btn-submit-transfer" class="btn btn-primary btn-lg" style="margin-top: 8px;">
@@ -152,7 +152,7 @@
       <div id="tab-content-passkeys" class="dashboard-tab-content">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">🔑 登録済みパスキー一覧</h3>
+            <h3 id="passkey-list-title" class="card-title">🔑 登録済みパスキー一覧</h3>
             <button id="btn-open-add-passkey" class="btn btn-primary" style="padding: 8px 14px; font-size: 13px;">
               ➕ パスキー追加
             </button>
@@ -172,8 +172,8 @@
       <div id="tab-content-history" class="dashboard-tab-content">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">📜 取引履歴 (明細一覧)</h3>
-            <span style="font-size: 13px; color: var(--text-muted);">全権限で閲覧可能</span>
+            <h3 id="history-card-title" class="card-title">📜 取引履歴 (明細一覧)</h3>
+            <span id="history-card-badge" style="font-size: 13px; color: var(--text-muted);">全権限で閲覧可能</span>
           </div>
           <ul id="tx-list" class="tx-list">
             <!-- Dynamically populated -->
@@ -189,30 +189,30 @@
     <div id="modal-add-passkey" class="modal-overlay">
       <div class="modal">
         <div class="card-header">
-          <h3 class="card-title">🔑 新しいパスキーの追加設定</h3>
+          <h3 id="modal-passkey-title" class="card-title">🔑 新しいパスキーの追加設定</h3>
           <button id="btn-close-modal-passkey" class="btn btn-secondary" style="padding: 6px 12px;">✕</button>
         </div>
 
-        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">
+        <p id="modal-passkey-desc" style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">
           用途に合わせてこのパスキーに付与する<strong>権限スコープ</strong>を選択してください。
         </p>
 
         <div class="form-group">
-          <label class="form-label" for="new-passkey-name">パスキーの表示名 (端末名など)</label>
+          <label id="label-new-passkey-name" class="form-label" for="new-passkey-name">パスキーの表示名 (端末名など)</label>
           <input type="text" id="new-passkey-name" class="form-input" placeholder="例: 会社のPC (閲覧用)" value="サブ端末パスキー">
         </div>
 
         <div class="form-group">
-          <label class="form-label">権限スコープ (Scope)</label>
+          <label id="label-modal-scope" class="form-label">権限スコープ (Scope)</label>
           
           <!-- Full Scope -->
           <label class="scope-option-card selected" id="opt-scope-full">
             <input type="radio" name="passkey_scope" value="full" checked>
             <div>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <strong>🟢 フル権限 (Full Access)</strong>
+                <strong id="modal-scope-full-title">🟢 フル権限 (Full Access)</strong>
               </div>
-              <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              <p id="modal-scope-full-desc" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
                 無制限の送金、履歴閲覧、新しいパスキー追加などすべての操作が可能です。
               </p>
             </div>
@@ -223,9 +223,9 @@
             <input type="radio" name="passkey_scope" value="read_only">
             <div>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <strong>🔵 取引履歴の閲覧のみ (Read Only)</strong>
+                <strong id="modal-scope-ro-title">🔵 取引履歴の閲覧のみ (Read Only)</strong>
               </div>
-              <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              <p id="modal-scope-ro-desc" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
                 残高・取引明細の確認のみ可能。送金やパスキー追加はブロックされます。
               </p>
             </div>
@@ -236,13 +236,13 @@
             <input type="radio" name="passkey_scope" value="limited_transfer">
             <div style="width: 100%;">
               <div style="display: flex; align-items: center; gap: 6px;">
-                <strong>🟡 金額限定送金 (Limited Transfer)</strong>
+                <strong id="modal-scope-lim-title">🟡 金額限定送金 (Limited Transfer)</strong>
               </div>
-              <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              <p id="modal-scope-lim-desc" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
                 設定した上限金額までの送金が可能。上限超えの送金やパスキー追加は不可。
               </p>
               <div id="container-limit-input" class="hidden" style="margin-top: 10px;">
-                <label class="form-label" style="font-size: 12px;">1回あたりの送金上限額 (円):</label>
+                <label id="label-modal-transfer-limit" class="form-label" style="font-size: 12px;">1回あたりの送金上限額 (円):</label>
                 <input type="number" id="new-passkey-limit" class="form-input" value="5000" min="100" step="100">
               </div>
             </div>

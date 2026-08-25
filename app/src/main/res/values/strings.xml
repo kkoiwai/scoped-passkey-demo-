@@ -1,4 +1,28 @@
 <resources>
     <string name="app_name">My CredMan</string>
     <string name="title_activity_get_credential">GetCredentialActivity</string>
+    <string name="tab_provisioning">🔑 Issue Passkey</string>
+    <string name="tab_saved_passkeys">📋 Saved (%1$d)</string>
+    <string name="no_saved_passkeys">No saved passkeys yet.</string>
+    
+    <!-- Passkey Provisioning Screen -->
+    <string name="provisioning_title">🔑 Passkey Provisioning</string>
+    <string name="provisioning_desc">Issue and register passkeys via Passkey Provisioning API (Tim Cappalli specification) using OAuth 2.0 (Auth Tab) authorization tokens.</string>
+    <string name="config_title">⚙️ Configuration (AuthConfig)</string>
+    <string name="progress_title">Process Flow Progress</string>
+    
+    <string name="step_oauth_title">OAuth Authorization</string>
+    <string name="step_oauth_sub">AuthTabIntent (PKCE S256)</string>
+    <string name="step_token_title">Token Exchange</string>
+    <string name="step_token_sub">POST /oauth/token (code_verifier)</string>
+    <string name="step_options_title">Fetch Options</string>
+    <string name="step_options_sub">POST /passkeys/creation-options</string>
+    <string name="step_keygen_title">Generate Passkey</string>
+    <string name="step_keygen_sub">Direct Key Generation (EC P-256)</string>
+    <string name="step_register_title">Register Public Key</string>
+    <string name="step_register_sub">POST /passkeys/register</string>
+    
+    <string name="btn_start_provisioning">Authorize via OAuth &amp; Issue Passkey</string>
+    <string name="btn_retry">Retry</string>
+    <string name="btn_reissue">Issue Another Passkey</string>
 </resources>

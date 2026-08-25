@@ -39,10 +39,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.mycredman.R
 
 @Composable
 fun PasskeyProvisioningScreen(
@@ -68,14 +70,14 @@ fun PasskeyProvisioningScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "🔑 Passkey Provisioning",
+                    text = stringResource(R.string.provisioning_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "OAuth 2.0 (Auth Tab) 認可フローで取得したトークンを使用し、Tim Cappalli 仕様に準拠した Passkey Provisioning API からパスキーを発行・登録します。",
+                    text = stringResource(R.string.provisioning_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                 )
@@ -92,7 +94,7 @@ fun PasskeyProvisioningScreen(
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Text(
-                    text = "⚙️ 設定情報 (AuthConfig)",
+                    text = stringResource(R.string.config_title),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -118,7 +120,7 @@ fun PasskeyProvisioningScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "処理フロー進捗",
+                    text = stringResource(R.string.progress_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -132,36 +134,36 @@ fun PasskeyProvisioningScreen(
 
                 StepIndicatorRow(
                     stepNumber = 1,
-                    title = "OAuth 認可",
-                    sub = "AuthTabIntent (PKCE S256)",
+                    title = stringResource(R.string.step_oauth_title),
+                    sub = stringResource(R.string.step_oauth_sub),
                     currentStep = currentStepNumber,
                     isError = uiState is ProvisioningUiState.Error && currentStepNumber <= 1
                 )
                 StepIndicatorRow(
                     stepNumber = 2,
-                    title = "トークン交換",
-                    sub = "POST /oauth/token (code_verifier)",
+                    title = stringResource(R.string.step_token_title),
+                    sub = stringResource(R.string.step_token_sub),
                     currentStep = currentStepNumber,
                     isError = uiState is ProvisioningUiState.Error && currentStepNumber == 2
                 )
                 StepIndicatorRow(
                     stepNumber = 3,
-                    title = "Options 取得",
-                    sub = "POST /passkeys/creation-options",
+                    title = stringResource(R.string.step_options_title),
+                    sub = stringResource(R.string.step_options_sub),
                     currentStep = currentStepNumber,
                     isError = uiState is ProvisioningUiState.Error && currentStepNumber == 3
                 )
                 StepIndicatorRow(
                     stepNumber = 4,
-                    title = "パスキー生成",
-                    sub = "CredentialManager (生体認証/画面ロック)",
+                    title = stringResource(R.string.step_keygen_title),
+                    sub = stringResource(R.string.step_keygen_sub),
                     currentStep = currentStepNumber,
                     isError = uiState is ProvisioningUiState.Error && currentStepNumber == 4
                 )
                 StepIndicatorRow(
                     stepNumber = 5,
-                    title = "公開鍵登録",
-                    sub = "POST /passkeys/register",
+                    title = stringResource(R.string.step_register_title),
+                    sub = stringResource(R.string.step_register_sub),
                     currentStep = currentStepNumber,
                     isError = uiState is ProvisioningUiState.Error && currentStepNumber == 5,
                     isLast = true
@@ -180,7 +182,7 @@ fun PasskeyProvisioningScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "OAuth 認証してパスキーを発行",
+                        text = stringResource(R.string.btn_start_provisioning),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -258,7 +260,7 @@ fun PasskeyProvisioningScreen(
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
                         ) {
-                            Text("もう一度実行する")
+                            Text(stringResource(R.string.btn_reissue))
                         }
                     }
                 }
@@ -274,7 +276,7 @@ fun PasskeyProvisioningScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "⚠️ エラーが発生しました [${uiState.step}]",
+                            text = "⚠️ Error [${uiState.step}]",
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
@@ -287,7 +289,7 @@ fun PasskeyProvisioningScreen(
                         if (!uiState.details.isNullOrEmpty()) {
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "詳細: ${uiState.details}",
+                                text = uiState.details,
                                 style = MaterialTheme.typography.bodySmall,
                                 fontFamily = FontFamily.Monospace,
                                 color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
@@ -301,10 +303,10 @@ fun PasskeyProvisioningScreen(
                                     containerColor = MaterialTheme.colorScheme.error
                                 )
                             ) {
-                                Text("再試行")
+                                Text(stringResource(R.string.btn_retry))
                             }
                             OutlinedButton(onClick = onReset) {
-                                Text("リセット")
+                                Text("Reset")
                             }
                         }
                     }

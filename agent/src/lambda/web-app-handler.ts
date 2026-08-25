@@ -72,6 +72,15 @@ function getSessionContext(event: HttpApiEvent): SessionContext {
   return { sessionId: newSessionId, isNew: true };
 }
 
+function isJapanese(event: HttpApiEvent): boolean {
+  const langParam = event.queryStringParameters?.lang || '';
+  if (langParam.startsWith('ja')) return true;
+  if (langParam.startsWith('en')) return false;
+
+  const acceptLang = event.headers?.['accept-language'] || event.headers?.['Accept-Language'] || '';
+  return acceptLang.toLowerCase().includes('ja');
+}
+
 export async function handler(event: HttpApiEvent): Promise<HttpApiResponse> {
   const method = event.requestContext?.http?.method || 'GET';
   const path = event.rawPath || event.requestContext?.http?.path || '/';
@@ -82,23 +91,27 @@ export async function handler(event: HttpApiEvent): Promise<HttpApiResponse> {
   const callbackUrl = `${baseUrl}/oauth/callback`;
 
   const session = getSessionContext(event);
-  console.log(`[LambdaWebApp] ${method} ${path} (Session: ${session.sessionId}, Host: ${host})`);
+  const isJa = isJapanese(event);
+  console.log(`[LambdaWebApp] ${method} ${path} (Session: ${session.sessionId}, Host: ${host}, Lang: ${isJa ? 'ja' : 'en'})`);
 
   // Route 1: OAuth Callback
   if (path === '/oauth/callback' && method === 'GET') {
     const { code, state, error, error_description } = query;
 
     if (error) {
-      return htmlResponse(400, `<h1>認可エラー</h1><p>${error}: ${error_description || ''}</p>`, session);
+      const errTitle = isJa ? '認可エラー' : 'Authorization Error';
+      return htmlResponse(400, `<h1>${errTitle}</h1><p>${error}: ${error_description || ''}</p>`, session);
     }
 
     if (!code || !state) {
-      return htmlResponse(400, '<h1>エラー</h1><p>code または state パラメータが不足しています。</p>', session);
+      const errMissing = isJa ? 'code または state パラメータが不足しています。' : 'Missing code or state parameter.';
+      return htmlResponse(400, `<h1>Error</h1><p>${errMissing}</p>`, session);
     }
 
     const pkceSession = await passkeyStore.consumePkceSession(state);
     if (!pkceSession) {
-      return htmlResponse(400, '<h1>セッションエラー</h1><p>PKCE セッションが見つからないか、期限切れです。コンソールからやり直してください。</p>', session);
+      const errPkce = isJa ? 'PKCE セッションが見つからないか、期限切れです。コンソールからやり直してください。' : 'PKCE session not found or expired. Please retry from the console.';
+      return htmlResponse(400, `<h1>Session Error</h1><p>${errPkce}</p>`, session);
     }
 
     try {
@@ -107,22 +120,32 @@ export async function handler(event: HttpApiEvent): Promise<HttpApiResponse> {
 
       const successSessionContext: SessionContext = { sessionId: targetSessionId, isNew: true };
 
+      const badgeText = isJa ? 'プロビジョニング完了' : 'Provisioning Complete';
+      const titleText = isJa ? '✅ パスキーを発行しました！' : '✅ Passkey Issued Successfully!';
+      const descText = isJa 
+        ? `このセッション（<code>${targetSessionId}</code>）専用のスコープ付きパスキーを登録しました。` 
+        : `Registered scoped passkey exclusively for this session (<code>${targetSessionId}</code>).`;
+      const labelUser = isJa ? 'ユーザー名:' : 'Username:';
+      const labelScope = isJa ? '権限スコープ:' : 'Permission Scope:';
+      const returnBtn = isJa ? '🏠 コンソールに戻って残高を照会する' : '🏠 Return to Console & Inquire Balance';
+
       return htmlResponse(200, `
         <div class="card">
-          <div class="badge success">プロビジョニング完了</div>
-          <h2>✅ パスキーを発行しました！</h2>
-          <p>このセッション（<code>${targetSessionId}</code>）専用のスコープ付きパスキーを登録しました。</p>
+          <div class="badge success">${badgeText}</div>
+          <h2>${titleText}</h2>
+          <p>${descText}</p>
           <div class="info-box">
-            <p><strong>ユーザー名:</strong> ${passkey.displayName}</p>
-            <p><strong>権限スコープ:</strong> ${passkey.scope}</p>
+            <p><strong>${labelUser}</strong> ${passkey.displayName}</p>
+            <p><strong>${labelScope}</strong> ${passkey.scope}</p>
             <p><strong>Credential ID:</strong> <code>${passkey.credentialId}</code></p>
           </div>
-          <a href="/" class="btn btn-primary" style="margin-top: 20px;">🏠 コンソールに戻って残高を照会する</a>
+          <a href="/" class="btn btn-primary" style="margin-top: 20px;">${returnBtn}</a>
         </div>
       `, successSessionContext);
     } catch (err: any) {
       console.error('[LambdaWebApp] Provisioning error:', err);
-      return htmlResponse(500, `<h1>プロビジョニング失敗</h1><p>${err.message}</p>`, session);
+      const failTitle = isJa ? 'プロビジョニング失敗' : 'Provisioning Failed';
+      return htmlResponse(500, `<h1>${failTitle}</h1><p>${err.message}</p>`, session);
     }
   }
 
@@ -133,7 +156,9 @@ export async function handler(event: HttpApiEvent): Promise<HttpApiResponse> {
       if (!passkey) {
         return jsonResponse(200, {
           success: false,
-          error: 'このセッション用のパスキーがまだ発行されていません。先に「Web認可画面を開いてパスキーを発行」を実行してください。'
+          error: isJa 
+            ? 'このセッション用のパスキーがまだ発行されていません。先に「Web認可画面を開いてパスキーを発行」を実行してください。' 
+            : 'No passkey has been issued for this session yet. Please click "Open Web Authorization to Issue Passkey" first.'
         }, session);
       }
 
@@ -143,7 +168,7 @@ export async function handler(event: HttpApiEvent): Promise<HttpApiResponse> {
       if (!result.success) {
         return jsonResponse(200, {
           success: false,
-          error: result.errorMessage || '残高の取得に失敗しました。',
+          error: result.errorMessage || (isJa ? '残高の取得に失敗しました。' : 'Failed to retrieve account balance.'),
           userDisplayName: passkey.displayName,
           scope: passkey.scope,
           credentialId: passkey.credentialId
@@ -177,28 +202,81 @@ export async function handler(event: HttpApiEvent): Promise<HttpApiResponse> {
   const passkey = await passkeyStore.getPasskeyByUserId(session.sessionId);
   const { url: authUrl } = await OAuthProvisioner.getAuthorizationUrl(callbackUrl, session.sessionId);
 
+  // Localization labels for Web Console
+  const labels = isJa ? {
+    headerTitle: 'AWS AI Agent Console',
+    subtitle: 'Scoped Passkey & WebAuthn Browser Automation',
+    sessionLabel: '🆔 <strong>現在のセッション:</strong>',
+    btnNewSession: '🔄 新規セッション開始',
+    targetBankTitle: '🏦 対象銀行サービス',
+    passkeyVaultTitle: '🔐 エージェント用パスキー保管状態 (セッション個別)',
+    passkeyIssuedLabel: '発行日時: ',
+    btnDeletePasskey: '🗑️ このセッションのパスキーを削除',
+    emptyPasskeyNotice: '⚠️ このセッションに割り当てられたパスキーがありません。',
+    btnOpenAuth: '🔗 Web認可画面を開いてパスキーを発行',
+    inquireSectionTitle: '💰 エージェントによる自動残高照会',
+    inquireSectionDesc: 'Headless Chrome (CDP Virtual Authenticator) にセッション保管中の秘密鍵を注入し、Webサイトに自動ログインして口座残高を取得します。',
+    btnInquire: '🚀 口座残高を照会する',
+    loadingText: 'エージェントが Headless Chrome を起動し、パスキーでログイン中...',
+    inquirySuccessBadge: '照会成功',
+    balanceLabel: '普通預金残高',
+    authScopeLabel: '🛡️ <strong>認証権限:</strong> ',
+    authDeviceLabel: '🔑 <strong>認証デバイス:</strong> ',
+    recentTxTitle: '📜 最近の取引履歴',
+    agentSpeechTitle: 'AI エージェントの回答:',
+    agentSpeechText: (name: string, balance: string, scope: string) => `「${name} 様、現在の普通預金残高は <strong>${balance}</strong>（${scope}）です。」`,
+    confirmDelete: 'このセッションに保管されているパスキーを削除しますか？',
+    errorPrefix: '❌ エラー: ',
+    netErrorPrefix: '❌ 通信エラー: '
+  } : {
+    headerTitle: 'AWS AI Agent Console',
+    subtitle: 'Scoped Passkey & WebAuthn Browser Automation',
+    sessionLabel: '🆔 <strong>Current Session:</strong>',
+    btnNewSession: '🔄 Start New Session',
+    targetBankTitle: '🏦 Target Banking Service',
+    passkeyVaultTitle: '🔐 Agent Passkey Vault Status (Per-Session)',
+    passkeyIssuedLabel: 'Issued: ',
+    btnDeletePasskey: '🗑️ Delete Passkey for this session',
+    emptyPasskeyNotice: '⚠️ No passkey assigned to this session.',
+    btnOpenAuth: '🔗 Open Web Authorization to Issue Passkey',
+    inquireSectionTitle: '💰 Automated Balance Inquiry by Agent',
+    inquireSectionDesc: 'Headless Chrome (CDP Virtual Authenticator) injects the session EC private key to log in and retrieve account balance automatically.',
+    btnInquire: '🚀 Inquire Account Balance',
+    loadingText: 'Agent is launching Headless Chrome and logging in with passkey...',
+    inquirySuccessBadge: 'Inquiry Successful',
+    balanceLabel: 'Savings Balance',
+    authScopeLabel: '🛡️ <strong>Permission Scope:</strong> ',
+    authDeviceLabel: '🔑 <strong>Authenticated Device:</strong> ',
+    recentTxTitle: '📜 Recent Transactions',
+    agentSpeechTitle: 'AI Agent Response:',
+    agentSpeechText: (name: string, balance: string, scope: string) => `"Dear ${name}, your current savings balance is <strong>${balance}</strong> (${scope})."`,
+    confirmDelete: 'Are you sure you want to delete the passkey stored for this session?',
+    errorPrefix: '❌ Error: ',
+    netErrorPrefix: '❌ Network Error: '
+  };
+
   return htmlResponse(200, `
     <div class="card">
       <div class="header">
         <span class="logo-icon">🤖</span>
         <div style="flex: 1;">
-          <h2>AWS AI Agent Console</h2>
-          <p class="subtitle">Scoped Passkey & WebAuthn Browser Automation</p>
+          <h2>${labels.headerTitle}</h2>
+          <p class="subtitle">${labels.subtitle}</p>
         </div>
       </div>
 
       <div class="session-bar">
-        <span>🆔 <strong>現在のセッション:</strong> <code>${session.sessionId}</code></span>
-        <a href="/?new_session=1" class="btn btn-secondary btn-sm" style="margin-left: auto;">🔄 新規セッション開始</a>
+        <span>${labels.sessionLabel} <code>${session.sessionId}</code></span>
+        <a href="/?new_session=1" class="btn btn-secondary btn-sm" style="margin-left: auto;">${labels.btnNewSession}</a>
       </div>
 
       <div class="section">
-        <h3>🏦 対象銀行サービス</h3>
+        <h3>${labels.targetBankTitle}</h3>
         <p>URL: <a href="${Config.BANK_BASE_URL}" target="_blank"><code>${Config.BANK_BASE_URL}</code></a></p>
       </div>
 
       <div class="section">
-        <h3>🔐 エージェント用パスキー保管状態 (セッション個別)</h3>
+        <h3>${labels.passkeyVaultTitle}</h3>
         ${passkey ? `
           <div class="passkey-card">
             <div class="passkey-header">
@@ -207,26 +285,26 @@ export async function handler(event: HttpApiEvent): Promise<HttpApiResponse> {
               <span class="badge ${passkey.scope === 'read_only' ? 'badge-info' : 'badge-warn'}">${passkey.scope}</span>
             </div>
             <p class="meta">Credential ID: <code>${passkey.credentialId}</code></p>
-            <p class="meta">発行日時: ${new Date(passkey.createdAt).toLocaleString('ja-JP')}</p>
-            <button id="btn-reset" class="btn btn-secondary btn-sm" style="margin-top: 10px;">🗑️ このセッションのパスキーを削除</button>
+            <p class="meta">${labels.passkeyIssuedLabel}${new Date(passkey.createdAt).toLocaleString(isJa ? 'ja-JP' : 'en-US')}</p>
+            <button id="btn-reset" class="btn btn-secondary btn-sm" style="margin-top: 10px;">${labels.btnDeletePasskey}</button>
           </div>
         ` : `
           <div class="empty-passkey">
-            <p>⚠️ このセッションに割り当てられたパスキーがありません。</p>
-            <a href="${authUrl}" class="btn btn-primary" style="margin-top: 10px;">🔗 Web認可画面を開いてパスキーを発行</a>
+            <p>${labels.emptyPasskeyNotice}</p>
+            <a href="${authUrl}" class="btn btn-primary" style="margin-top: 10px;">${labels.btnOpenAuth}</a>
           </div>
         `}
       </div>
 
       ${passkey ? `
         <div class="section">
-          <h3>💰 エージェントによる自動残高照会</h3>
-          <p>Headless Chrome (CDP Virtual Authenticator) にセッション保管中の秘密鍵を注入し、Webサイトに自動ログインして口座残高を取得します。</p>
-          <button id="btn-inquire" class="btn btn-success btn-lg">🚀 口座残高を照会する</button>
+          <h3>${labels.inquireSectionTitle}</h3>
+          <p>${labels.inquireSectionDesc}</p>
+          <button id="btn-inquire" class="btn btn-success btn-lg">${labels.btnInquire}</button>
 
           <div id="inquiry-loading" class="loading-state hidden">
             <div class="spinner"></div>
-            <p>エージェントが Headless Chrome を起動し、パスキーでログイン中...</p>
+            <p>${labels.loadingText}</p>
           </div>
 
           <div id="inquiry-result" class="result-card hidden"></div>
@@ -236,6 +314,7 @@ export async function handler(event: HttpApiEvent): Promise<HttpApiResponse> {
 
     <script>
       const CURRENT_SESSION_ID = "${session.sessionId}";
+      const IS_JA = ${isJa};
       try {
         localStorage.setItem('agent_session_id', CURRENT_SESSION_ID);
       } catch (e) {}
@@ -265,18 +344,23 @@ export async function handler(event: HttpApiEvent): Promise<HttpApiResponse> {
             btnInquire.disabled = false;
 
             if (data.success) {
+              const scopeTitle = data.scopeBannerTitle || data.activeScope;
+              const agentSpeech = IS_JA 
+                ? \`「\${data.userDisplayName} 様、現在の普通預金残高は <strong>\${data.balanceFormatted}</strong>（\${scopeTitle}）です。」\`
+                : \`"Dear \${data.userDisplayName}, your current savings balance is <strong>\${data.balanceFormatted}</strong> (\${scopeTitle})."\`;
+
               resultEl.innerHTML = \`
-                <div class="badge success">照会成功</div>
+                <div class="badge success">${labels.inquirySuccessBadge}</div>
                 <div class="balance-display">
-                  <span class="balance-label">普通預金残高</span>
+                  <span class="balance-label">${labels.balanceLabel}</span>
                   <span class="balance-amount">\${data.balanceFormatted}</span>
                 </div>
                 <div class="auth-info">
-                  <p>🛡️ <strong>認証権限:</strong> \${data.scopeBannerTitle || data.activeScope}</p>
-                  <p>🔑 <strong>認証デバイス:</strong> \${data.activePasskeyName}</p>
+                  <p>${labels.authScopeLabel}\${scopeTitle}</p>
+                  <p>${labels.authDeviceLabel}\${data.activePasskeyName}</p>
                 </div>
                 <div class="tx-section">
-                  <h4>📜 最近の取引履歴</h4>
+                  <h4>${labels.recentTxTitle}</h4>
                   <ul class="tx-list">
                     \${data.transactions.map(t => \`
                       <li class="tx-item">
@@ -292,20 +376,20 @@ export async function handler(event: HttpApiEvent): Promise<HttpApiResponse> {
                 <div class="agent-speech">
                   <div class="agent-avatar">🤖</div>
                   <div>
-                    <strong>AI エージェントの回答:</strong>
-                    <p>「\${data.userDisplayName} 様、現在の普通預金残高は <strong>\${data.balanceFormatted}</strong>（\${data.scopeBannerTitle || data.activeScope}）です。」</p>
+                    <strong>${labels.agentSpeechTitle}</strong>
+                    <p>\${agentSpeech}</p>
                   </div>
                 </div>
               \`;
               resultEl.classList.remove('hidden');
             } else {
-              resultEl.innerHTML = \`<div class="error-box">❌ エラー: \${data.error || '残高の取得に失敗しました。'}</div>\`;
+              resultEl.innerHTML = \`<div class="error-box">${labels.errorPrefix}\${data.error || (IS_JA ? '残高の取得に失敗しました。' : 'Failed to retrieve balance.')}</div>\`;
               resultEl.classList.remove('hidden');
             }
           } catch (err) {
             loadingEl.classList.add('hidden');
             btnInquire.disabled = false;
-            resultEl.innerHTML = \`<div class="error-box">❌ 通信エラー: \${err.message}</div>\`;
+            resultEl.innerHTML = \`<div class="error-box">${labels.netErrorPrefix}\${err.message}</div>\`;
             resultEl.classList.remove('hidden');
           }
         });
@@ -313,7 +397,7 @@ export async function handler(event: HttpApiEvent): Promise<HttpApiResponse> {
 
       if (btnReset) {
         btnReset.addEventListener('click', async () => {
-          if (confirm('このセッションに保管されているパスキーを削除しますか？')) {
+          if (confirm("${labels.confirmDelete}")) {
             await fetch('/api/reset', {
               method: 'POST',
               headers: {

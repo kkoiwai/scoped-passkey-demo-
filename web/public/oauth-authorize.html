@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>パスキー発行の認可 - Scoped Passkey Bank</title>
+  <title>Client Authorization - Scoped Passkey Bank</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
     body {
@@ -28,7 +28,7 @@
     <div style="text-align: center; margin-bottom: 24px;">
       <span style="font-size: 48px;">🏦</span>
       <h2 style="font-size: 22px; font-weight: 800; margin-top: 8px;">Scoped Passkey Bank</h2>
-      <p style="font-size: 14px; color: var(--text-muted); margin-top: 4px;">
+      <p id="oauth-subtitle" style="font-size: 14px; color: var(--text-muted); margin-top: 4px;">
         連携クライアントへのパスキー発行認可
       </p>
     </div>
@@ -38,7 +38,7 @@
 
     <!-- Step A: Authenticate with Existing Passkey (if not logged in) -->
     <div id="step-auth-needed" class="hidden">
-      <div class="alert alert-warning" style="margin-bottom: 20px;">
+      <div id="auth-needed-alert" class="alert alert-warning" style="margin-bottom: 20px;">
         🔐 端末・クライアントにパスキーを発行する前に、まず登録済みの既存パスキーでご本人確認を行ってください。
       </div>
       <button id="btn-login-first" class="btn btn-primary btn-lg">
@@ -49,10 +49,10 @@
     <!-- Step B: Scope Selection & Grant Consent -->
     <div id="step-grant-consent" class="hidden">
       <div class="alert alert-success" style="margin-bottom: 20px;">
-        👤 認証済みアカウント: <strong id="auth-username">-</strong>
+        <span id="auth-acc-label">👤 認証済みアカウント: </span><strong id="auth-username">-</strong>
       </div>
 
-      <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 12px;">
+      <h3 id="scope-select-title" style="font-size: 17px; font-weight: 700; margin-bottom: 12px;">
         🔐 付与するパスキー権限を選択
       </h3>
 
@@ -61,8 +61,8 @@
         <label class="scope-option-card" id="oauth-opt-full">
           <input type="radio" name="oauth_scope" value="full">
           <div>
-            <strong>🟢 フル権限 (Full Access)</strong>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+            <strong id="scope-full-title">🟢 フル権限 (Full Access)</strong>
+            <p id="scope-full-desc" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
               送金制限なし・パスキー管理を含む全機能を利用可能。
             </p>
           </div>
@@ -72,8 +72,8 @@
         <label class="scope-option-card" id="oauth-opt-readonly">
           <input type="radio" name="oauth_scope" value="read_only">
           <div>
-            <strong>🔵 取引履歴の閲覧のみ (Read Only)</strong>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+            <strong id="scope-ro-title">🔵 取引履歴の閲覧のみ (Read Only)</strong>
+            <p id="scope-ro-desc" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
               残高と明細の確認のみ。送金は一切不可。
             </p>
           </div>
@@ -83,12 +83,12 @@
         <label class="scope-option-card selected" id="oauth-opt-limited">
           <input type="radio" name="oauth_scope" value="limited_transfer" checked>
           <div style="width: 100%;">
-            <strong>🟡 金額限定送金 (Limited Transfer)</strong>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+            <strong id="scope-lim-title">🟡 金額限定送金 (Limited Transfer)</strong>
+            <p id="scope-lim-desc" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
               設定した上限金額までの送金を許可（デモおすすめ）。
             </p>
             <div id="oauth-limit-container" style="margin-top: 10px;">
-              <label class="form-label" style="font-size: 12px;">送金上限額 (円):</label>
+              <label id="label-transfer-limit" class="form-label" style="font-size: 12px;">送金上限額 (円):</label>
               <input type="number" id="oauth-transfer-limit" class="form-input" value="5000" min="100" step="500">
             </div>
           </div>
@@ -96,7 +96,7 @@
       </div>
 
       <div class="form-group" style="margin-top: 16px;">
-        <label class="form-label" for="oauth-passkey-name">パスキー端末名</label>
+        <label id="label-passkey-device-name" class="form-label" for="oauth-passkey-name">パスキー端末名</label>
         <input type="text" id="oauth-passkey-name" class="form-input" value="AI Agent">
       </div>
 
@@ -112,6 +112,87 @@
   </div>
 
   <script>
+    // Language detection
+    const userLang = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+    const isJa = userLang.startsWith('ja');
+
+    const i18n = {
+      ja: {
+        pageTitle: 'パスキー発行の認可 - Scoped Passkey Bank',
+        subtitle: '連携クライアントへのパスキー発行認可',
+        authNeededAlert: '🔐 端末・クライアントにパスキーを発行する前に、まず登録済みの既存パスキーでご本人確認を行ってください。',
+        btnLoginFirst: '🔑 既存パスキーで認証する',
+        authAccLabel: '👤 認証済みアカウント: ',
+        scopeSelectTitle: '🔐 付与するパスキー権限を選択',
+        scopeFullTitle: '🟢 フル権限 (Full Access)',
+        scopeFullDesc: '送金制限なし・パスキー管理を含む全機能を利用可能。',
+        scopeRoTitle: '🔵 取引履歴の閲覧のみ (Read Only)',
+        scopeRoDesc: '残高と明細の確認のみ。送金は一切不可。',
+        scopeLimTitle: '🟡 金額限定送金 (Limited Transfer)',
+        scopeLimDesc: '設定した上限金額までの送金を許可（デモおすすめ）。',
+        labelTransferLimit: '送金上限額 (円):',
+        labelPasskeyDeviceName: 'パスキー端末名',
+        btnAuthorizeGrant: '✅ 認可してパスキーを発行',
+        btnAuthorizeCancel: '✕ キャンセル',
+        callingPasskey: 'パスキーを呼び出しています...',
+        signalRemoved: '⚠️ サーバー上に存在しないパスキーのため、Signal API により端末から削除シグナルを送信しました。',
+        unregisteredPasskey: 'このパスキーはサーバー上に登録されていません。',
+        authSuccessFull: 'フル権限での認証に成功しました！発行する権限を選択してください。',
+        authInsufficient: (scope) => `【権限エラー】認証に使用されたパスキーは「${scope}」です。パスキーの発行認可を行うには、「フル権限」のマスターパスキーで認証してください。`,
+        authFailed: '認証に失敗しました。',
+        issuingCode: '認可コードを発行しています...',
+        redirecting: 'リダイレクト中...',
+        issueFailed: '認可コードの発行に失敗しました。'
+      },
+      en: {
+        pageTitle: 'Authorize Passkey Provisioning - Scoped Passkey Bank',
+        subtitle: 'Authorize Passkey Provisioning for Client',
+        authNeededAlert: '🔐 Please verify your identity with an existing registered passkey before issuing a passkey to a client/device.',
+        btnLoginFirst: '🔑 Authenticate with Existing Passkey',
+        authAccLabel: '👤 Authenticated Account: ',
+        scopeSelectTitle: '🔐 Select Passkey Permissions to Grant',
+        scopeFullTitle: '🟢 Full Access',
+        scopeFullDesc: 'No transfer limits. Full access to all features including passkey management.',
+        scopeRoTitle: '🔵 Read-Only Access',
+        scopeRoDesc: 'View balances and transaction history only. No transfers permitted.',
+        scopeLimTitle: '🟡 Limited Transfer Access',
+        scopeLimDesc: 'Allow money transfers up to the configured limit per transaction (Recommended for demo).',
+        labelTransferLimit: 'Transfer Limit (JPY):',
+        labelPasskeyDeviceName: 'Passkey Device Name',
+        btnAuthorizeGrant: '✅ Authorize & Issue Passkey',
+        btnAuthorizeCancel: '✕ Cancel',
+        callingPasskey: 'Prompting for passkey authentication...',
+        signalRemoved: '⚠️ Credential not found on server. Sent Signal API request to remove it from your device.',
+        unregisteredPasskey: 'This passkey is not registered on the server.',
+        authSuccessFull: 'Successfully authenticated with Full Access! Please select the permissions to grant.',
+        authInsufficient: (scope) => `[Permission Denied] The passkey used has "${scope}" access. Authorizing new passkeys requires a Full Access Master Passkey.`,
+        authFailed: 'Authentication failed.',
+        issuingCode: 'Issuing authorization code...',
+        redirecting: 'Redirecting...',
+        issueFailed: 'Failed to issue authorization code.'
+      }
+    };
+
+    const t = isJa ? i18n.ja : i18n.en;
+
+    // Apply translations
+    document.title = t.pageTitle;
+    document.getElementById('oauth-subtitle').textContent = t.subtitle;
+    document.getElementById('auth-needed-alert').innerHTML = t.authNeededAlert;
+    document.getElementById('btn-login-first').textContent = t.btnLoginFirst;
+    document.getElementById('auth-acc-label').textContent = t.authAccLabel;
+    document.getElementById('scope-select-title').textContent = t.scopeSelectTitle;
+    document.getElementById('scope-full-title').textContent = t.scopeFullTitle;
+    document.getElementById('scope-full-desc').textContent = t.scopeFullDesc;
+    document.getElementById('scope-ro-title').textContent = t.scopeRoTitle;
+    document.getElementById('scope-ro-desc').textContent = t.scopeRoDesc;
+    document.getElementById('scope-lim-title').textContent = t.scopeLimTitle;
+    document.getElementById('scope-lim-desc').textContent = t.scopeLimDesc;
+    document.getElementById('label-transfer-limit').textContent = t.labelTransferLimit;
+    document.getElementById('label-passkey-device-name').textContent = t.labelPasskeyDeviceName;
+    document.getElementById('btn-authorize-grant').textContent = t.btnAuthorizeGrant;
+    document.getElementById('btn-authorize-cancel').textContent = t.btnAuthorizeCancel;
+
     // Parse query params
     const params = new URLSearchParams(window.location.search);
     const clientId = params.get('client_id') || 'mycredman-client';
@@ -150,9 +231,9 @@
     });
 
     function getScopeLabel(scope) {
-      if (scope === 'read_only') return '閲覧専用 (Read Only)';
-      if (scope === 'limited_transfer') return '金額限定送金 (Limited Transfer)';
-      return 'フル権限 (Full Access)';
+      if (scope === 'read_only') return isJa ? '閲覧専用 (Read Only)' : 'Read Only';
+      if (scope === 'limited_transfer') return isJa ? '金額限定送金 (Limited Transfer)' : 'Limited Transfer';
+      return isJa ? 'フル権限 (Full Access)' : 'Full Access';
     }
 
     // Check Session
@@ -169,21 +250,21 @@
             // Logged in with non-full passkey
             stepAuthNeeded.classList.remove('hidden');
             stepGrantConsent.classList.add('hidden');
-            showAlert(`【権限不足】現在「${getScopeLabel(data.activeScope)}」のパスキーでログインしています。新しいパスキーの発行認可を行うには、「フル権限」のマスターパスキーで認証してください。`, 'danger');
+            showAlert(t.authInsufficient(getScopeLabel(data.activeScope)), 'danger');
           }
         } else {
           stepAuthNeeded.classList.remove('hidden');
           stepGrantConsent.classList.add('hidden');
         }
       } catch (err) {
-        showAlert('セッションの確認に失敗しました: ' + err.message, 'danger');
+        showAlert(err.message, 'danger');
       }
     }
 
     // Authenticate with Passkey directly on authorize page
     document.getElementById('btn-login-first').addEventListener('click', async () => {
       try {
-        showAlert('パスキーを呼び出しています...', 'info');
+        showAlert(t.callingPasskey, 'info');
         const optRes = await fetch('/api/auth/login-options', { method: 'POST' });
         const options = await optRes.json();
 
@@ -223,13 +304,13 @@
                 rpId: window.location.hostname,
                 credentialId: credJson.id
               });
-              showAlert('⚠️ サーバー上に存在しないパスキーのため、Signal API により端末から削除シグナルを送信しました。', 'warning');
+              showAlert(t.signalRemoved, 'warning');
               return;
             } catch (e) {
               console.warn('[Signal API] signalUnknownCredential error:', e);
             }
           }
-          showAlert('このパスキーはサーバー上に登録されていません。', 'danger');
+          showAlert(t.unregisteredPasskey, 'danger');
           return;
         }
 
@@ -237,17 +318,17 @@
 
         if (verifyData.success) {
           if (verifyData.scope === 'full') {
-            showAlert('フル権限での認証に成功しました！発行する権限を選択してください。', 'success');
+            showAlert(t.authSuccessFull, 'success');
             checkSession();
           } else {
-            showAlert(`【権限エラー】認証に使用されたパスキーは「${getScopeLabel(verifyData.scope)}」です。パスキーの発行認可を行うには、「フル権限」のマスターパスキーで認証してください。`, 'danger');
+            showAlert(t.authInsufficient(getScopeLabel(verifyData.scope)), 'danger');
             checkSession();
           }
         } else {
-          showAlert(verifyData.error || '認証に失敗しました。', 'danger');
+          showAlert(verifyData.error || t.authFailed, 'danger');
         }
       } catch (err) {
-        showAlert('認証エラー: ' + err.message, 'danger');
+        showAlert(err.message, 'danger');
       }
     });
 
@@ -256,9 +337,9 @@
       try {
         const selectedScope = document.querySelector('input[name="oauth_scope"]:checked')?.value || 'limited_transfer';
         const transferLimit = document.getElementById('oauth-transfer-limit').value || '5000';
-        const passkeyName = document.getElementById('oauth-passkey-name').value || 'Scoped Passkey';
+        const passkeyName = document.getElementById('oauth-passkey-name').value || (isJa ? 'AI Agent' : 'AI Agent');
 
-        showAlert('認可コードを発行しています...', 'info');
+        showAlert(t.issuingCode, 'info');
 
         const res = await fetch('/oauth/consent', {
           method: 'POST',
@@ -277,13 +358,13 @@
 
         const data = await res.json();
         if (data.success && data.redirectUrl) {
-          showAlert('リダイレクト中...', 'success');
+          showAlert(t.redirecting, 'success');
           window.location.href = data.redirectUrl;
         } else {
-          showAlert(data.error || '認可コードの発行に失敗しました。', 'danger');
+          showAlert(data.error || t.issueFailed, 'danger');
         }
       } catch (err) {
-        showAlert('エラー: ' + err.message, 'danger');
+        showAlert(err.message, 'danger');
       }
     });
 

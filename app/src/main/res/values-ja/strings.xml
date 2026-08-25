@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">My CredMan</string>
+    <string name="title_activity_get_credential">GetCredentialActivity</string>
+    <string name="tab_provisioning">🔑 パスキー発行</string>
+    <string name="tab_saved_passkeys">📋 保存済み (%1$d)</string>
+    <string name="no_saved_passkeys">保存されたパスキーはまだありません。</string>
+    
+    <!-- Passkey Provisioning Screen -->
+    <string name="provisioning_title">🔑 Passkey Provisioning</string>
+    <string name="provisioning_desc">OAuth 2.0 (Auth Tab) 認可フローで取得したトークンを使用し、Tim Cappalli 仕様に準拠した Passkey Provisioning API からパスキーを発行・登録します。</string>
+    <string name="config_title">⚙️ 設定情報 (AuthConfig)</string>
+    <string name="progress_title">処理フロー進捗</string>
+    
+    <string name="step_oauth_title">OAuth 認可</string>
+    <string name="step_oauth_sub">AuthTabIntent (PKCE S256)</string>
+    <string name="step_token_title">トークン交換</string>
+    <string name="step_token_sub">POST /oauth/token (code_verifier)</string>
+    <string name="step_options_title">Options 取得</string>
+    <string name="step_options_sub">POST /passkeys/creation-options</string>
+    <string name="step_keygen_title">パスキー生成</string>
+    <string name="step_keygen_sub">自アプリ内直接鍵生成 (EC P-256)</string>
+    <string name="step_register_title">公開鍵登録</string>
+    <string name="step_register_sub">POST /passkeys/register</string>
+    
+    <string name="btn_start_provisioning">OAuth 認証してパスキーを発行</string>
+    <string name="btn_retry">再試行</string>
+    <string name="btn_reissue">もう一度パスキーを発行する</string>
+</resources>
