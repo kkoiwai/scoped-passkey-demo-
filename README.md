@@ -20,6 +20,10 @@
 2. **モック銀行 Web サービス (`web/` - [https://sp.exarnp1e.com](https://sp.exarnp1e.com))**: GCP Cloud Run 上で動作する、権限スコープ付きパスキーおよび Provisioning API / Signal API 対応の銀行サービス。
 3. **AWS AI エージェント (`agent/` - [https://58p3ucbudc.execute-api.ap-northeast-1.amazonaws.com/](https://58p3ucbudc.execute-api.ap-northeast-1.amazonaws.com/))**: AWS Lambda (コンテナ) 上で Headless Chrome & CDP Virtual Authenticator を駆動し、保管したスコープ付きパスキーで自動ログイン・残高照会を行うエージェント。
 
+> [!NOTE]
+> **PoC環境におけるデータ保持期間について (GCP Cloud Run)**:  
+> 本デモ銀行（`sp.exarnp1e.com`）はPoC用のインメモリデータストアで動作しており、データ整合性維持のため最大インスタンス数は `1` に設定されています。アクセスが途切れて約5分経過するとサーバーレスコンテナのアイドル停止に伴いデータ（登録パスキー・残高・取引明細）が自動消去されます。ログインできない場合は「新規口座開設」から再度ご登録ください。
+
 ---
 
 ## 🌟 主な機能と特徴
@@ -246,6 +250,10 @@ The project is organized into three major components:
 1. **Android Client App (`app/`)**: Credential Provider application with self-contained passkey generation and management.
 2. **Mock Banking Web Service (`web/` - [https://sp.exarnp1e.com](https://sp.exarnp1e.com))**: Express service deployed on GCP Cloud Run supporting Scoped Passkeys, Provisioning API, and Signal API.
 3. **AWS AI Agent (`agent/` - [https://58p3ucbudc.execute-api.ap-northeast-1.amazonaws.com/](https://58p3ucbudc.execute-api.ap-northeast-1.amazonaws.com/))**: Serverless container on AWS Lambda utilizing Headless Chrome and CDP Virtual Authenticator for automated passkey authentication and balance scraping.
+
+> [!NOTE]
+> **Ephemeral In-Memory Data Store (GCP Cloud Run)**:  
+> The mock banking service (`sp.exarnp1e.com`) operates with an in-memory data store, and max instances are set to `1` to maintain state consistency. After ~5 minutes of inactivity without incoming HTTP traffic, the serverless instance automatically terminates and all data (registered passkeys, balances, transaction logs) is reset. If you are unable to log in, please create a fresh account via "新規口座開設" (Sign Up).
 
 ---
 
