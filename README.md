@@ -1,4 +1,4 @@
-# My Credential Manager & Scoped Passkey Bank Demo
+# My Credential Manager, Scoped Passkey Bank & AI Agent Demo
 
 <p align="center">
   <img src="MyCredMan_Icon.png" width="120px" alt="App Icon">
@@ -12,24 +12,28 @@
 
 # 🇯🇵 日本語 (Japanese)
 
-本リポジトリは、**Android 14+ の Credential Provider / Passkey 連携機能** と、Tim Cappalli 氏提唱の **Passkey Provisioning API** 仕様、および権限スコープ付きパスキー（**Scoped Passkey**）の検証用デモアプリケーションです。
+本リポジトリは、**Android 14+ の Credential Provider / Passkey 連携機能**、Tim Cappalli 氏提唱の **Passkey Provisioning API** 仕様、権限スコープ付きパスキー（**Scoped Passkey**）、および **AWS Lambda 上の Headless Chrome による AI エージェント自動認証・残高照会** の総合検証デモプロジェクトです。
 
-Android クライアントアプリ（`app/`）および GCP Cloud Run 上で動作するモック銀行 Web サービス（`web/` - `https://sp.exarnp1e.com`）で構成されています。
+本プロジェクトは以下の 3 つの主要コンポーネントで構成されています。
+
+1. **Android クライアントアプリ (`app/`)**: 自前でパスキー鍵ペアを生成・管理する Credential Provider アプリ。
+2. **モック銀行 Web サービス (`web/` - [https://sp.exarnp1e.com](https://sp.exarnp1e.com))**: GCP Cloud Run 上で動作する、権限スコープ付きパスキーおよび Provisioning API / Signal API 対応の銀行サービス。
+3. **AWS AI エージェント (`agent/` - [https://58p3ucbudc.execute-api.ap-northeast-1.amazonaws.com/](https://58p3ucbudc.execute-api.ap-northeast-1.amazonaws.com/))**: AWS Lambda (コンテナ) 上で Headless Chrome & CDP Virtual Authenticator を駆動し、保管したスコープ付きパスキーで自動ログイン・残高照会を行うエージェント。
 
 ---
 
 ## 🌟 主な機能と特徴
 
 ### 1. Passkey Provisioning API (Tim Cappalli 仕様準拠)
-- **Auth Tab（`AuthTabIntent`）連携**:
-  - Android アプリから Chrome Custom Tabs / Auth Tab を起動し、Web サービス側の OAuth 2.0 認可エンドポイントにアクセス。
-  - PKCE（S256）によるセキュアな認可コードフローでアクセストークンを取得。
-- **自アプリ内での直接パスキー生成（`DirectPasskeyCreator`）**:
-  - OS の Credential Manager API ダイアログを経由せず、自アプリ（`MyCredentialManager`）内で直接 `EC P-256` 鍵ペアおよび 32 バイトの `credentialId` を生成。
-  - アプリ内部の保管庫（`MyCredentialDataManager`）に直接保存し、生成した WebAuthn 登録レスポンス JSON をサーバーの Passkey Provisioning API（`POST /passkeys/register`）へ送信・登録。
+- **OAuth 2.0 PKCE 認可フロー**:
+  - Android アプリ（Auth Tab）または AI エージェントから銀行の認可エンドポイント（`/oauth/authorize`）へアクセス。
+  - フル権限（`full`）を持つマスターパスキーで生体認証・ログイン後、付与する権限スコープ（閲覧専用や送金上限）を選択して認可コードを発行。
+- **クライアント側での直接鍵ペア生成**:
+  - アクセストークンを用いて `/passkeys/creation-options` を取得後、クライアント（Android または Node.js Agent）内で直接 `EC P-256` 鍵ペアを生成。
+  - 生成した WebAuthn 登録レスポンス JSON を `/passkeys/register` へ送信してサーバー側にパスキーを登録。
 
 ### 2. 権限スコープ付きパスキー (Scoped Passkey)
-銀行 Web サービス側で、発行するパスキーごとに操作権限（スコープ）を付与・制限できます。
+発行するパスキーごとに操作権限（スコープ）を付与・制限できます。
 
 | スコープ | 名称 | 送金権限 | パスキー追加権限 | 取引履歴閲覧 |
 | :--- | :--- | :--- | :--- | :--- |
@@ -38,27 +42,29 @@ Android クライアントアプリ（`app/`）および GCP Cloud Run 上で動
 | `read_only` | **閲覧専用 (Read Only)** | ❌ 不可 | ❌ 不可 | ⭕ 可能 |
 
 - **初期登録**: Web 画面からの初回口座開設（初期残高 ¥100,000 付与）時に、マスターパスキー（`full`）を発行。
-- **Android アプリ連携時の認可制御**:
-  - Auth Tab 認可画面（`oauth-authorize.html`）での認証時、`full` 権限のパスキーでログインした場合のみ認可・スコープ設定が可能（閲覧専用などのパスキーでは認可不可）。
+- **パスキーマネージャーでの衝突防止**: スコープ付きパスキー発行時に一意の `user.id`（userHandle）およびスコープ付きユーザー名（例: `alice+readonly@example.com`）を割り当て、同一端末のパスキーマネージャー上で重複せず区別可能。
 
-### 3. WebAuthn Signal API 実装
+### 3. AWS AI エージェント & Headless Chrome 自動認証 (`agent/`)
+- **CDP Virtual Authenticator によるパスキー注入**:
+  - Headless Chrome（Puppeteer-core）を起動し、Chrome DevTools Protocol (CDP) の Virtual Authenticator を通じて Vault に保管された EC 秘密鍵を注入。
+  - WebAuthn アサーション署名を動的生成して自動ログインを実行。
+- **ブラウザセッションごとの Vault 完全分離**:
+  - 各訪問者ごとに一意のセッション ID（`sess_<random>`）が自動発行され、Cookie / Header で管理。
+  - DynamoDB (`ScopedPasskeyVault`) 上でセッション単位にパスキーが独立保管されるため、複数ユーザー・複数アカウントの検証が安全に行えます。
+
+### 4. WebAuthn Signal API 実装
 - **`PublicKeyCredential.signalUnknownCredential`**:
-  - サーバーのデータベースに存在しないパスキーでログインを試行した場合（HTTP 404）、または Web ダッシュボードからパスキーを削除した場合にクライアント側で呼び出し、端末のパスキーマネージャー（Google パスワードマネージャー等）から不要なパスキーの削除・無効化シグナルを送信。
+  - サーバーのデータベースに存在しないパスキーでログインを試行した場合（HTTP 404）、または Web ダッシュボードからパスキーを削除した場合に呼び出し、パスキーマネージャーから不要なパスキーを削除・無効化。
 - **`PublicKeyCredential.signalAllAcceptedCredentials`**:
-  - ダッシュボード読み込み時やパスキー更新時に、サーバーに登録されている全有効パスキー ID 一覧をパスキーマネージャーと同期。
+  - ダッシュボード読み込み時やパスキー更新時に、有効なパスキー ID 一覧をパスキーマネージャーと同期。
 - **`PublicKeyCredential.signalCurrentUserDetails`**:
-  - ログイン成功時にユーザー名（`username`）および表示名（`displayName`）をパスキーマネージャーと同期。
-
-### 4. モバイル対応レスポンシブ UI & 単一 JSON データストア
-- **タブ切り替え UI**:
-  - スマートフォン画面でも快適に操作できるよう、ダッシュボードを「💸 お振込み」「🔑 パスキー管理」「📜 取引履歴」の 3 つのタブで切り替え可能。
-- **単一 JSON データストア**:
-  - ユーザー情報、パスキー、口座残高、取引明細、OAuth コード/トークンをすべて `data/store.json` で一元管理し、Web UI 上の「DB JSON を確認」モーダルからリアルタイムに状態を確認可能。
+  - ログイン成功時にユーザー名と表示名をパスキーマネージャーと同期。
 
 ---
 
 ## 🏗️ 処理フロー
 
+### 1. Android アプリによるパスキープロビジョニング
 ```mermaid
 sequenceDiagram
     autonumber
@@ -90,6 +96,32 @@ sequenceDiagram
     App->>User: パスキー発行・登録完了画面を表示
 ```
 
+### 2. AWS AI エージェントによる自動ログイン・残高照会
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as ユーザー
+    participant Console as AI Agent Console (API Gateway)
+    participant Lambda as AWS Lambda (Node.js)
+    participant Bank as Bank Server (sp.exarnp1e.com)
+    participant Chrome as Headless Chrome (CDP Virtual Authenticator)
+
+    User->>Console: 「Web認可画面を開いてパスキーを発行」
+    Console->>Bank: OAuth 2.0 PKCE 認可画面を開く
+    User->>Bank: マスターパスキーで認証 & スコープ（閲覧専用等）を選択・同意
+    Bank-->>Console: /oauth/callback?code=... へリダイレクト
+    Lambda->>Bank: Token Exchange & POST /passkeys/register (直接生成したEC鍵)
+    Lambda->>Lambda: DynamoDB にセッション専用パスキーを保存
+    
+    User->>Console: 「🚀 口座残高を照会する」クリック
+    Console->>Lambda: POST /api/inquire (Session ID)
+    Lambda->>Chrome: Headless Chrome 起動 & CDP Virtual Authenticator に秘密鍵注入
+    Chrome->>Bank: 銀行ログイン画面へアクセス & パスキー自動署名
+    Bank-->>Chrome: 認証成功・ダッシュボード表示
+    Chrome->>Lambda: 口座残高・取引履歴をスクレイピング
+    Lambda-->>Console: 残高・明細を返却して画面表示
+```
+
 ---
 
 ## 📂 プロジェクト構成
@@ -110,20 +142,38 @@ sequenceDiagram
 │   │       └── PasskeyProvisioningViewModel.kt
 │   └── src/main/AndroidManifest.xml
 │
-└── web/                                    # Scoped Passkey Bank Web サービス
-    ├── data/
-    │   └── store.json                      # 単一 JSON データストア
-    ├── public/
-    │   ├── index.html                      # メイン銀行画面 (タブUI)
-    │   ├── app.js                          # フロントエンド WebAuthn & Signal API ロジック
-    │   ├── styles.css                      # スタイル & レスポンシブ CSS
-    │   └── oauth-authorize.html            # Auth Tab 認可・スコープ同意画面
+├── web/                                    # Scoped Passkey Bank Web サービス
+│   ├── data/
+│   │   └── store.json                      # 単一 JSON データストア
+│   ├── public/
+│   │   ├── index.html                      # メイン銀行画面 (タブUI)
+│   │   ├── app.js                          # フロントエンド WebAuthn & Signal API ロジック
+│   │   ├── styles.css                      # スタイル & レスポンシブ CSS
+│   │   └── oauth-authorize.html            # Auth Tab 認可・スコープ同意画面
+│   ├── src/
+│   │   ├── server.js                       # Express サーバー (WebAuthn, OAuth, Provisioning)
+│   │   ├── db.js                           # 単一 JSON DB レイヤー
+│   │   └── config.js                       # 環境変数 (RP_ID, ORIGIN)
+│   ├── test/                               # 単体テストスイート (node:test)
+│   ├── Dockerfile                          # Cloud Run 用コンテナ定義
+│   └── package.json
+│
+└── agent/                                  # AWS AI Agent (Headless Chrome + Scoped Passkey)
     ├── src/
-    │   ├── server.js                       # Express サーバー (WebAuthn, OAuth, Provisioning)
-    │   ├── db.js                           # 単一 JSON DB レイヤー
-    │   └── config.js                       # 環境変数 (RP_ID, ORIGIN)
-    ├── test/                               # 単体テストスイート (node:test)
-    ├── Dockerfile                          # Cloud Run 用コンテナ定義
+    │   ├── browser/
+    │   │   └── virtual-authenticator.ts   # Puppeteer & CDP Virtual Authenticator 自動ログイン
+    │   ├── crypto/
+    │   │   └── passkey-generator.ts       # EC P-256 鍵ペア & WebAuthn 登録オブジェクト生成
+    │   ├── lambda/
+    │   │   └── web-app-handler.ts         # API Gateway HTTP API ハンドラー (セッション個別管理)
+    │   ├── provisioning/
+    │   │   └── oauth-provisioner.ts       # OAuth PKCE & Passkey Provisioning 実行
+    │   ├── storage/
+    │   │   └── passkey-store.ts           # DynamoDB / ローカル Vault 保存レイヤー
+    │   ├── config.ts                      # 設定・環境変数
+    │   └── index.ts                       # ローカル開発用 HTTP サーバー
+    ├── test/                              # 暗号・署名検証テスト
+    ├── Dockerfile                         # AWS Lambda コンテナ定義 (Chrome & AL2023)
     └── package.json
 ```
 
@@ -139,54 +189,78 @@ sequenceDiagram
   ```
 - **実行**: Android Studio から `app` を起動。
 
-### 2. Web サービスのローカル実行
-- **要件**: Node.js 20+
-- **起動**:
+### 2. Web サービスのローカル実行 & Cloud Run デプロイ
+- **ローカル起動**:
   ```bash
   cd web
   npm install
   npm run dev
   # http://localhost:8080 で起動
   ```
-- **テスト実行**:
+- **単体テスト**:
   ```bash
   cd web
   npm test
   ```
+- **GCP Cloud Run へのデプロイ**:
+  ```bash
+  cd web
+  gcloud run deploy scoped-passkey-bank \
+    --project scoped-passkey-example \
+    --source . \
+    --region asia-northeast1 \
+    --allow-unauthenticated
+  ```
 
-### 3. GCP Cloud Run へのデプロイ
-```bash
-cd web
-gcloud run deploy scoped-passkey-bank \
-  --project scoped-passkey-example \
-  --source . \
-  --region asia-northeast1 \
-  --allow-unauthenticated \
-  --set-env-vars RP_ID=sp.exarnp1e.com,ORIGIN=https://sp.exarnp1e.com
-```
+### 3. AWS AI エージェントのローカル実行 & Lambda デプロイ
+- **ローカルテスト**:
+  ```bash
+  cd agent
+  npm install
+  npm test
+  npm run dev
+  # http://localhost:3000 で起動
+  ```
+- **AWS Lambda (ECR コンテナ) へのデプロイ**:
+  ```bash
+  cd agent
+  npm run build
+  aws ecr get-login-password --profile bedrock --region ap-northeast-1 | docker login --username AWS --password-stdin 609425363848.dkr.ecr.ap-northeast-1.amazonaws.com
+  docker build --platform linux/amd64 -t 609425363848.dkr.ecr.ap-northeast-1.amazonaws.com/scoped-passkey-agent:latest .
+  docker push 609425363848.dkr.ecr.ap-northeast-1.amazonaws.com/scoped-passkey-agent:latest
+  aws lambda update-function-code \
+    --function-name scoped-passkey-agent \
+    --image-uri 609425363848.dkr.ecr.ap-northeast-1.amazonaws.com/scoped-passkey-agent:latest \
+    --profile bedrock \
+    --region ap-northeast-1
+  ```
 
 ---
 
 # 🇺🇸 English
 
-This repository is a demonstration project showcasing **Android 14+ Credential Provider / Passkey capabilities**, the **Passkey Provisioning API** specification proposed by Tim Cappalli, and **Scoped Passkeys** (passkeys with granular permission scopes).
+This repository is a comprehensive demonstration showcasing **Android 14+ Credential Provider / Passkey capabilities**, the **Passkey Provisioning API** specification proposed by Tim Cappalli, **Scoped Passkeys** (granular permissions), and **Automated Headless WebAuthn Authentication** using Chrome DevTools Protocol on AWS Lambda.
 
-The project consists of an Android client app (`app/`) and a mock banking web service (`web/` - `https://sp.exarnp1e.com`) deployed on GCP Cloud Run.
+The project is organized into three major components:
+
+1. **Android Client App (`app/`)**: Credential Provider application with self-contained passkey generation and management.
+2. **Mock Banking Web Service (`web/` - [https://sp.exarnp1e.com](https://sp.exarnp1e.com))**: Express service deployed on GCP Cloud Run supporting Scoped Passkeys, Provisioning API, and Signal API.
+3. **AWS AI Agent (`agent/` - [https://58p3ucbudc.execute-api.ap-northeast-1.amazonaws.com/](https://58p3ucbudc.execute-api.ap-northeast-1.amazonaws.com/))**: Serverless container on AWS Lambda utilizing Headless Chrome and CDP Virtual Authenticator for automated passkey authentication and balance scraping.
 
 ---
 
 ## 🌟 Key Features
 
 ### 1. Passkey Provisioning API (Tim Cappalli Draft Spec)
-- **Auth Tab (`AuthTabIntent`) Integration**:
-  - Launches Chrome Custom Tabs / Auth Tab from the Android app to access the OAuth 2.0 authorization endpoint on the Web service.
-  - Retrieves access tokens via secure PKCE (S256) authorization code flow.
-- **Direct Passkey Generation (`DirectPasskeyCreator`)**:
-  - Directly generates `EC P-256` key pairs and 32-byte `credentialId`s within the credential manager app itself (`MyCredentialManager`), bypassing the OS Credential Manager dialog.
-  - Persists keys directly into the app's local vault (`MyCredentialDataManager`) and submits the standard WebAuthn registration response JSON to the Passkey Provisioning API (`POST /passkeys/register`).
+- **OAuth 2.0 PKCE Flow**:
+  - Android App (via Auth Tab) or AI Agent connects to `/oauth/authorize`.
+  - Authenticates with a full-access master passkey, chooses the requested operational scope, and issues an authorization code.
+- **Direct Client Key Generation**:
+  - Fetches `/passkeys/creation-options` and directly creates an `EC P-256` key pair on the client side without relying on platform dialogs.
+  - Registers the generated WebAuthn response JSON via `POST /passkeys/register`.
 
 ### 2. Scoped Passkeys (Granular Permission Control)
-The banking service allows configuring operational scopes per passkey:
+Configure specific operational privileges per passkey:
 
 | Scope | Name | Money Transfer | Add Passkey | View Transaction History |
 | :--- | :--- | :--- | :--- | :--- |
@@ -194,92 +268,51 @@ The banking service allows configuring operational scopes per passkey:
 | `limited_transfer` | **Limited Transfer** | 🔺 Up to configured limit (e.g. ¥5,000) | ❌ Denied | ⭕ Allowed |
 | `read_only` | **Read Only** | ❌ Denied | ❌ Denied | ⭕ Allowed |
 
-- **Initial Signup**: Creates a master passkey (`full` scope) upon account opening with an initial balance of ¥100,000.
-- **Auth Tab Authorization Control**:
-  - On the consent screen (`oauth-authorize.html`), only authentications made with a `full`-scope master passkey can grant consent and configure new passkey scopes.
+- **Collision Prevention**: Every scoped passkey is assigned a distinct user handle and scoped username (e.g., `alice+readonly@example.com`), allowing passkey managers to clearly differentiate multiple credentials for the same service.
 
-### 3. WebAuthn Signal API Implementation
-- **`PublicKeyCredential.signalUnknownCredential`**:
-  - Invoked on the client when authenticating with a passkey that does not exist on the server (HTTP 404) or upon passkey deletion from the dashboard, notifying the client passkey manager (e.g., Google Password Manager) to remove/hide obsolete credentials.
-- **`PublicKeyCredential.signalAllAcceptedCredentials`**:
-  - Synchronizes all active credential IDs registered for the user with the client passkey manager on dashboard load and deletion.
-- **`PublicKeyCredential.signalCurrentUserDetails`**:
-  - Synchronizes user `name` and `displayName` upon successful authentication.
+### 3. Automated Headless WebAuthn Agent (`agent/`)
+- **CDP Virtual Authenticator**:
+  - Injects stored EC private keys into Headless Chrome via Chrome DevTools Protocol to dynamically generate valid WebAuthn assertion signatures for automatic login.
+- **Isolated Per-Session Vault**:
+  - Automatically provisions random Session IDs (`sess_<random>`) stored in cookies and headers.
+  - Passkeys are isolated per session in DynamoDB (`ScopedPasskeyVault`), ensuring completely independent multi-user evaluations.
 
-### 4. Responsive Tabbed UI & Single JSON Data Store
-- **Tab Navigation**:
-  - Optimized for mobile and desktop screens with segmented tabs: "💸 Transfer", "🔑 Passkeys", and "📜 History".
-- **Single JSON Data Store**:
-  - Manages users, passkeys, account balances, transactions, and OAuth tokens inside `data/store.json`, inspectable in real-time via the "View DB JSON" modal.
-
----
-
-## 🏗️ Architecture Flow
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as User
-    participant App as Android App (MyCredentialManager)
-    participant AuthTab as Auth Tab (OAuth Consent)
-    participant Server as Bank Server (sp.exarnp1e.com)
-    participant Store as Local Storage (MyCredentialDataManager)
-
-    User->>App: Tap "Issue Passkey via Web"
-    App->>AuthTab: Open Auth Tab via AuthTabIntent (/oauth/authorize)
-    AuthTab->>User: Request biometric authentication with full-scope passkey
-    User->>AuthTab: Authenticate with Master Passkey
-    AuthTab->>User: Select permission scope (e.g. Read-Only / Limit ¥5,000)
-    User->>AuthTab: Grant Consent
-    AuthTab-->>App: Redirect via mycredman://oauth/callback?code=...
-    
-    App->>Server: POST /oauth/token (code + PKCE verifier)
-    Server-->>App: Access Token (with bound scope)
-    
-    App->>Server: POST /passkeys/creation-options (Bearer Token)
-    Server-->>App: PublicKeyCredentialCreationOptions JSON
-    
-    Note over App,Store: Directly generate EC P-256 key pair & store locally
-    App->>Store: MyCredentialDataManager.save(rpid, credentialId, keyPair)
-    
-    App->>Server: POST /passkeys/register (WebAuthn Registration Response JSON)
-    Server-->>App: 201 Created (Passkey registered & scope bound)
-    App->>User: Display success screen
-```
+### 4. WebAuthn Signal API Implementation
+- **`PublicKeyCredential.signalUnknownCredential`**: Signals passkey managers to delete obsolete credentials upon HTTP 404 or dashboard deletion.
+- **`PublicKeyCredential.signalAllAcceptedCredentials`**: Synchronizes valid credential IDs on dashboard load.
+- **`PublicKeyCredential.signalCurrentUserDetails`**: Synchronizes user details on login.
 
 ---
 
 ## 🚀 Setup & Execution
 
-### 1. Build and Run Android App
-- **Requirements**: Android Studio Flamingo+, JDK 17 / 21, Android 14+ (API 34+) device or emulator.
-- **Build & Test**:
-  ```bash
-  ./gradlew assembleDebug testDebugUnitTest
-  ```
+### 1. Android App
+```bash
+./gradlew assembleDebug testDebugUnitTest
+```
 
-### 2. Run Web Service Locally
-- **Requirements**: Node.js 20+
-- **Start**:
-  ```bash
-  cd web
-  npm install
-  npm run dev
-  # Runs on http://localhost:8080
-  ```
-- **Test**:
-  ```bash
-  cd web
-  npm test
-  ```
-
-### 3. Deploy to GCP Cloud Run
+### 2. Web Service (Local & Cloud Run)
 ```bash
 cd web
-gcloud run deploy scoped-passkey-bank \
-  --project scoped-passkey-example \
-  --source . \
-  --region asia-northeast1 \
-  --allow-unauthenticated \
-  --set-env-vars RP_ID=sp.exarnp1e.com,ORIGIN=https://sp.exarnp1e.com
+npm install
+npm test
+npm run dev
+
+# Deploy to Cloud Run
+gcloud run deploy scoped-passkey-bank --source . --region asia-northeast1 --project scoped-passkey-example --allow-unauthenticated
+```
+
+### 3. AWS AI Agent (Local & Lambda)
+```bash
+cd agent
+npm install
+npm test
+npm run dev
+
+# Deploy to AWS Lambda
+npm run build
+aws ecr get-login-password --profile bedrock --region ap-northeast-1 | docker login --username AWS --password-stdin 609425363848.dkr.ecr.ap-northeast-1.amazonaws.com
+docker build --platform linux/amd64 -t 609425363848.dkr.ecr.ap-northeast-1.amazonaws.com/scoped-passkey-agent:latest .
+docker push 609425363848.dkr.ecr.ap-northeast-1.amazonaws.com/scoped-passkey-agent:latest
+aws lambda update-function-code --function-name scoped-passkey-agent --image-uri 609425363848.dkr.ecr.ap-northeast-1.amazonaws.com/scoped-passkey-agent:latest --profile bedrock --region ap-northeast-1
 ```

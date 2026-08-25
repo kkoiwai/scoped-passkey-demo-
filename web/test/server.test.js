@@ -5,9 +5,22 @@ import crypto from 'node:crypto';
 import { Database } from '../src/db.js';
 
 describe('Scoped Passkey Demo Bank Web Service Tests', () => {
+  let testUserId;
+
+  before(() => {
+    const raw = Database.getRawData();
+    // Clean testuser
+    Object.keys(raw.users).forEach(id => {
+      if (raw.users[id].username === 'testuser@example.com') {
+        delete raw.users[id];
+        delete raw.balances[id];
+      }
+    });
+  });
 
   it('1. Database initial user creation and balance assignment', () => {
     const user = Database.createUser('testuser@example.com', 'Test User');
+    testUserId = user.id;
     assert.strictEqual(user.username, 'testuser@example.com');
     assert.strictEqual(Database.getBalance(user.id), 100000, 'Initial balance should be 100,000 JPY');
   });

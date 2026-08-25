@@ -16,9 +16,6 @@
         <span>Scoped Demo Bank</span>
       </div>
       <div class="nav-actions">
-        <button id="btn-view-store" class="btn btn-secondary" style="padding: 8px 14px; font-size: 13px;">
-          📊 JSONストア確認
-        </button>
         <div id="user-header-info" class="hidden" style="display: flex; align-items: center; gap: 10px;">
           <span id="user-display-name" style="font-weight: 600; font-size: 14px;"></span>
           <button id="btn-logout" class="btn btn-danger" style="padding: 8px 14px; font-size: 13px;">
@@ -252,22 +249,6 @@
         <button id="btn-create-scoped-passkey" class="btn btn-success btn-lg" style="margin-top: 10px;">
           🛡️ この権限でパスキーを発行・登録
         </button>
-      </div>
-    </div>
-
-    <!-- ======================================================== -->
-    <!-- 4. JSON DATA STORE VIEWER MODAL -->
-    <!-- ======================================================== -->
-    <div id="modal-store-viewer" class="modal-overlay">
-      <div class="modal" style="max-width: 720px;">
-        <div class="card-header">
-          <h3 class="card-title">📊 インメモリ JSON データストア</h3>
-          <button id="btn-close-modal-store" class="btn btn-secondary" style="padding: 6px 12px;">✕</button>
-        </div>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-          ユーザー、パスキー、残高、取引履歴、OAuth セッションが全て 1 つの JSON で管理されています。
-        </p>
-        <pre id="store-json-content" style="background: #0f172a; color: #38bdf8; padding: 16px; border-radius: 10px; font-family: monospace; font-size: 12px; overflow-x: auto; max-height: 480px;"></pre>
       </div>
     </div>
 

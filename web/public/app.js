@@ -58,10 +58,6 @@ const addPasskeyScopeNotice = document.getElementById('add-passkey-scope-notice'
 const modalAddPasskey = document.getElementById('modal-add-passkey');
 const btnCloseModalPasskey = document.getElementById('btn-close-modal-passkey');
 const btnCreateScopedPasskey = document.getElementById('btn-create-scoped-passkey');
-const modalStoreViewer = document.getElementById('modal-store-viewer');
-const btnCloseModalStore = document.getElementById('btn-close-modal-store');
-const btnViewStore = document.getElementById('btn-view-store');
-const storeJsonContent = document.getElementById('store-json-content');
 
 // Current State
 let currentSession = null;
@@ -589,7 +585,14 @@ btnCreateScopedPasskey.addEventListener('click', async () => {
 
   try {
     showAlert('パスキー追加オプションを取得中...', 'info');
-    const optRes = await fetch('/api/passkeys/add-options', { method: 'POST' });
+    const optRes = await fetch('/api/passkeys/add-options', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scope: selectedScope,
+        transferLimit: parseInt(transferLimit, 10)
+      })
+    });
     const options = await optRes.json();
     if (options.error) throw new Error(options.error);
 
@@ -642,28 +645,9 @@ btnCreateScopedPasskey.addEventListener('click', async () => {
   }
 });
 
-// -------------------------------------------------------------
-// JSON Data Store Viewer Modal
-// -------------------------------------------------------------
-btnViewStore.addEventListener('click', async () => {
-  try {
-    const res = await fetch('/api/debug/store');
-    const data = await res.json();
-    storeJsonContent.textContent = JSON.stringify(data, null, 2);
-    modalStoreViewer.classList.add('active');
-  } catch (err) {
-    showAlert('データストアの取得に失敗しました: ' + err.message, 'danger');
-  }
-});
-
-btnCloseModalStore.addEventListener('click', () => {
-  modalStoreViewer.classList.remove('active');
-});
-
 // Close modal when clicking overlay
 window.addEventListener('click', (e) => {
   if (e.target === modalAddPasskey) modalAddPasskey.classList.remove('active');
-  if (e.target === modalStoreViewer) modalStoreViewer.classList.remove('active');
 });
 
 // Initial load

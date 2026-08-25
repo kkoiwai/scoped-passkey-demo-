@@ -57,21 +57,16 @@ app.post('/api/auth/register-options', async (req, res) => {
     }
 
     const { rpId, rpName } = config.getRpIdAndOrigin(req);
-    const existingUser = Database.getUserByUsername(username);
-    const userId = existingUser ? existingUser.id : Buffer.from(username).toString('base64url');
-    const existingPasskeys = Database.getPasskeysByUserId(userId);
+    const newUserId = `usr_${crypto.randomBytes(12).toString('hex')}`;
 
     const options = await generateRegistrationOptions({
       rpName,
       rpID: rpId,
-      userID: Buffer.from(userId, 'utf-8'),
+      userID: Buffer.from(newUserId, 'utf-8'),
       userName: username,
       userDisplayName: displayName || username.split('@')[0],
       attestationType: 'none',
-      excludeCredentials: existingPasskeys.map(p => ({
-        id: p.id,
-        transports: p.transports
-      })),
+      excludeCredentials: [],
       authenticatorSelection: {
         residentKey: 'required',
         userVerification: 'preferred'
@@ -79,6 +74,7 @@ app.post('/api/auth/register-options', async (req, res) => {
     });
 
     req.session.currentChallenge = options.challenge;
+    req.session.pendingUserId = newUserId;
     req.session.pendingUsername = username;
     req.session.pendingDisplayName = displayName || username.split('@')[0];
 
@@ -96,6 +92,7 @@ app.post('/api/auth/register-verify', async (req, res) => {
     const challenge = req.session.currentChallenge;
     const username = req.session.pendingUsername;
     const displayName = req.session.pendingDisplayName;
+    const pendingUserId = req.session.pendingUserId;
 
     if (!challenge || !username) {
       return res.status(400).json({ error: 'セッションが切断されました。もう一度お試しください。' });
@@ -121,11 +118,8 @@ app.post('/api/auth/register-verify', async (req, res) => {
     const counter = regInfo.counter ?? regInfo.credential?.counter ?? 0;
     const { credentialDeviceType, credentialBackedUp, aaguid } = regInfo;
 
-    // Create or retrieve user
-    let user = Database.getUserByUsername(username);
-    if (!user) {
-      user = Database.createUser(username, displayName);
-    }
+    // Create a new unique user instance
+    const user = Database.createUser(username, displayName, pendingUserId);
 
     // Save initial passkey with FULL scope
     const passkey = Database.savePasskey({
@@ -144,6 +138,7 @@ app.post('/api/auth/register-verify', async (req, res) => {
 
     // Clear temp session values and set active login
     req.session.currentChallenge = null;
+    req.session.pendingUserId = null;
     req.session.pendingUsername = null;
     req.session.pendingDisplayName = null;
     req.session.userId = user.id;
@@ -212,7 +207,7 @@ app.post('/api/auth/login-verify', async (req, res) => {
       authenticator: {
         credentialID: passkey.id,
         credentialPublicKey: Buffer.from(passkey.publicKey, 'base64url'),
-        counter: passkey.counter || 0,
+        counter: 0,
         transports: passkey.transports
       },
       requireUserVerification: false
@@ -360,19 +355,37 @@ app.post('/api/passkeys/add-options', async (req, res) => {
 
     const user = Database.getUserById(userId);
     const { rpId, rpName } = config.getRpIdAndOrigin(req);
-    const existingPasskeys = Database.getPasskeysByUserId(userId);
+    const { scope = 'full', transferLimit } = req.body || {};
+
+    let scopedDisplayName = user.displayName;
+    let scopedUsername = user.username;
+    if (scope === 'read_only') {
+      scopedDisplayName = `${user.displayName} (Read-only)`;
+      scopedUsername = user.username.includes('@')
+        ? user.username.replace('@', '+readonly@')
+        : `${user.username} (Read-only)`;
+    } else if (scope === 'limited_transfer') {
+      const limit = transferLimit || 5000;
+      scopedDisplayName = `${user.displayName} (${limit} yen limit)`;
+      scopedUsername = user.username.includes('@')
+        ? user.username.replace('@', `+${limit}yen@`)
+        : `${user.username} (${limit} yen limit)`;
+    } else {
+      scopedUsername = user.username.includes('@')
+        ? user.username.replace('@', `+sub_${crypto.randomBytes(2).toString('hex')}@`)
+        : `${user.username} (Sub)`;
+    }
+
+    const subUserId = `${user.id}:sub_${scope}_${crypto.randomBytes(4).toString('hex')}`;
 
     const options = await generateRegistrationOptions({
       rpName,
       rpID: rpId,
-      userID: Buffer.from(user.id, 'utf-8'),
-      userName: user.username,
-      userDisplayName: user.displayName,
+      userID: Buffer.from(subUserId, 'utf-8'),
+      userName: scopedUsername,
+      userDisplayName: scopedDisplayName,
       attestationType: 'none',
-      excludeCredentials: existingPasskeys.map(p => ({
-        id: p.id,
-        transports: p.transports
-      })),
+      excludeCredentials: [],
       authenticatorSelection: {
         residentKey: 'required',
         userVerification: 'preferred'
@@ -505,7 +518,7 @@ app.post('/oauth/consent', (req, res) => {
       state,
       scope = 'limited_transfer',
       transferLimit = 5000,
-      passkeyName = 'Android App Passkey'
+      passkeyName = 'Scoped Passkey'
     } = req.body;
 
     if (!codeChallenge) {
@@ -603,17 +616,35 @@ app.post('/passkeys/creation-options', async (req, res) => {
     const { rpId, rpName } = config.getRpIdAndOrigin(req);
     const existingPasskeys = Database.getPasskeysByUserId(user.id);
 
+    let displayName = user.displayName;
+    let userName = user.username;
+    if (tokenEntry.scope === 'read_only') {
+      displayName = `${user.displayName} (Read-only)`;
+      userName = user.username.includes('@')
+        ? user.username.replace('@', '+readonly@')
+        : `${user.username} (Read-only)`;
+    } else if (tokenEntry.scope === 'limited_transfer') {
+      const limit = tokenEntry.transferLimit || 5000;
+      displayName = `${user.displayName} (${limit} yen limit)`;
+      userName = user.username.includes('@')
+        ? user.username.replace('@', `+${limit}yen@`)
+        : `${user.username} (${limit} yen limit)`;
+    } else {
+      userName = user.username.includes('@')
+        ? user.username.replace('@', '+agent@')
+        : `${user.username} (AI Agent)`;
+    }
+
+    const scopedUserId = `${user.id}:prov_${tokenEntry.scope}_${crypto.randomBytes(4).toString('hex')}`;
+
     const options = await generateRegistrationOptions({
       rpName,
       rpID: rpId,
-      userID: Buffer.from(user.id, 'utf-8'),
-      userName: user.username,
-      userDisplayName: user.displayName,
+      userID: Buffer.from(scopedUserId, 'utf-8'),
+      userName,
+      userDisplayName: displayName,
       attestationType: 'none',
-      excludeCredentials: existingPasskeys.map(p => ({
-        id: p.id,
-        transports: p.transports
-      })),
+      excludeCredentials: [],
       authenticatorSelection: {
         authenticatorAttachment: 'platform',
         residentKey: 'required',
@@ -654,29 +685,10 @@ app.post('/passkeys/register', async (req, res) => {
     const credential = req.body;
     const { rpId, origin } = config.getRpIdAndOrigin(req);
 
-    // Build list of allowed origins (Web origin + Android APK key-hash origins)
-    const allowedOrigins = [
-      origin,
-      'https://sp.exarnp1e.com',
-      'https://scoped-passkey-bank-dcc4sayznq-an.a.run.app',
-      'http://localhost:8080'
-    ];
-
-    if (credential.response?.clientDataJSON) {
-      try {
-        const clientData = JSON.parse(Buffer.from(credential.response.clientDataJSON, 'base64url').toString('utf-8'));
-        if (clientData.origin && (clientData.origin.startsWith('android:apk-key-hash:') || clientData.origin.startsWith('android:apk-key-sha256:'))) {
-          allowedOrigins.push(clientData.origin);
-        }
-      } catch (e) {
-        console.warn('[Provisioning] Failed to parse clientDataJSON for origin check:', e);
-      }
-    }
-
     const verification = await verifyRegistrationResponse({
       response: credential,
       expectedChallenge: challenge,
-      expectedOrigin: allowedOrigins,
+      expectedOrigin: origin,
       expectedRPID: rpId,
       requireUserVerification: false
     });
@@ -701,7 +713,7 @@ app.post('/passkeys/register', async (req, res) => {
       backedUp: credentialBackedUp,
       transports: credential.response?.transports || ['internal'],
       aaguid: aaguid || '00000000-0000-0000-0000-000000000000',
-      name: tokenEntry.passkeyName || `Android Passkey (${tokenEntry.scope})`,
+      name: tokenEntry.passkeyName || `Scoped Passkey (${tokenEntry.scope})`,
       scope: tokenEntry.scope,
       transferLimit: tokenEntry.transferLimit
     });
@@ -722,14 +734,10 @@ app.post('/passkeys/register', async (req, res) => {
 });
 
 // -------------------------------------------------------------
-// 5. Health Check & Debug Data Store
+// 5. Health Check
 // -------------------------------------------------------------
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
-});
-
-app.get('/api/debug/store', (req, res) => {
-  res.json(Database.getRawData());
 });
 
 // Start Server

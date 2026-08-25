@@ -29,7 +29,7 @@
       <span style="font-size: 48px;">🏦</span>
       <h2 style="font-size: 22px; font-weight: 800; margin-top: 8px;">Scoped Passkey Bank</h2>
       <p style="font-size: 14px; color: var(--text-muted); margin-top: 4px;">
-        Android クライアントへのパスキー発行認可
+        連携クライアントへのパスキー発行認可
       </p>
     </div>
 
@@ -39,7 +39,7 @@
     <!-- Step A: Authenticate with Existing Passkey (if not logged in) -->
     <div id="step-auth-needed" class="hidden">
       <div class="alert alert-warning" style="margin-bottom: 20px;">
-        🔐 端末にパスキーを発行する前に、まず登録済みの既存パスキーでご本人確認を行ってください。
+        🔐 端末・クライアントにパスキーを発行する前に、まず登録済みの既存パスキーでご本人確認を行ってください。
       </div>
       <button id="btn-login-first" class="btn btn-primary btn-lg">
         🔑 既存パスキーで認証する
@@ -53,7 +53,7 @@
       </div>
 
       <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 12px;">
-        📱 アプリに付与するパスキー権限を選択
+        🔐 付与するパスキー権限を選択
       </h3>
 
       <div class="form-group">
@@ -97,7 +97,7 @@
 
       <div class="form-group" style="margin-top: 16px;">
         <label class="form-label" for="oauth-passkey-name">パスキー端末名</label>
-        <input type="text" id="oauth-passkey-name" class="form-input" value="MyCredentialManager (Android)">
+        <input type="text" id="oauth-passkey-name" class="form-input" value="AI Agent">
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 24px;">
@@ -256,7 +256,7 @@
       try {
         const selectedScope = document.querySelector('input[name="oauth_scope"]:checked')?.value || 'limited_transfer';
         const transferLimit = document.getElementById('oauth-transfer-limit').value || '5000';
-        const passkeyName = document.getElementById('oauth-passkey-name').value || 'Android Passkey';
+        const passkeyName = document.getElementById('oauth-passkey-name').value || 'Scoped Passkey';
 
         showAlert('認可コードを発行しています...', 'info');
 
@@ -277,7 +277,7 @@
 
         const data = await res.json();
         if (data.success && data.redirectUrl) {
-          showAlert('Android アプリへリダイレクト中...', 'success');
+          showAlert('リダイレクト中...', 'success');
           window.location.href = data.redirectUrl;
         } else {
           showAlert(data.error || '認可コードの発行に失敗しました。', 'danger');

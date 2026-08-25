@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -67,8 +68,8 @@ export const Database = {
     return Object.values(db.users).find(u => u.username.toLowerCase() === username.toLowerCase()) || null;
   },
 
-  createUser(username, displayName) {
-    const id = Buffer.from(username).toString('base64url');
+  createUser(username, displayName, customId = null) {
+    const id = customId || `usr_${crypto.randomBytes(12).toString('hex')}`;
     const user = {
       id,
       username,
@@ -82,7 +83,7 @@ export const Database = {
 
     // Initial Transaction Record
     db.transactions.push({
-      id: `tx_${Date.now()}_init`,
+      id: `tx_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
       userId: id,
       type: 'deposit',
       amount: 100000,
@@ -237,7 +238,7 @@ export const Database = {
     userId,
     scope = 'full',
     transferLimit = null,
-    passkeyName = 'Android Passkey'
+    passkeyName = 'Scoped Passkey'
   }) {
     db.oauthCodes[code] = {
       code,
@@ -279,7 +280,7 @@ export const Database = {
     userId,
     scope = 'full',
     transferLimit = null,
-    passkeyName = 'Android Passkey'
+    passkeyName = 'Scoped Passkey'
   }) {
     db.accessTokens[token] = {
       token,
