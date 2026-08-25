@@ -12,7 +12,13 @@
 
 # 🇯🇵 日本語 (Japanese)
 
-本リポジトリは、**モック銀行 Web サービス**（GCP Cloud Run）、**Headless Chrome による AI エージェント自動認証・残高照会**（AWS Lambda）、および **Android 14+ Credential Provider アプリ** による、Tim Cappalli 氏提唱の **[WebAuthn Direct Registration for Workforce (WDR4W)](https://github.com/timcappalli/explainers/tree/main/WebAuthnDirectRegistrationWorkforce)** 草案に基づく直接プロビジョニング・権限スコープ付きパスキー（**Scoped Passkey**）の総合検証デモプロジェクトです。
+本リポジトリは、**モック銀行 Web サービス**（GCP Cloud Run）、**Headless Chrome による AI エージェント自動認証・残高照会**（AWS Lambda）、および **Android 14+ Credential Provider アプリ** を用いた、OAuth 2.0 PKCE 認可フローによる**パスキー直接プロビジョニング（Direct Registration）**と権限スコープ付きパスキー（**Scoped Passkey**）の総合検証デモプロジェクトです。
+
+> [!NOTE]
+> **💡 WebAuthn Direct Registration (WDR4W) と本提案の位置づけ**:  
+> Tim Cappalli 氏によって提案された **[WebAuthn Direct Registration for Workforce (WDR4W)](https://github.com/timcappalli/explainers/tree/main/WebAuthnDirectRegistrationWorkforce)** は、企業・組織管理下の環境（**Managed Context / Workforce**）において、管理対象の Credential Manager やエンタープライズ構成を前提とした事前プロビジョニング仕様です。  
+> 
+> 一方で、本リポジトリの提案は Tim 氏の仕様公開前から独自に着想されていたものであり、企業管理下ではない一般コンシューマーや AI エージェント（**Non-Managed Context / Non-Workforce**）へのパスキー権限委譲・直接発行（Scoped Passkey）を目的としています。Tim 氏の先駆的な議論に深く敬意を払いつつ、本プロジェクトでは「コンシューマー向け金融サービスにおける AI エージェントへの権限制御付き自動認証」という独自のユースケースを実証しています。
 
 本プロジェクトは以下の 3 つの主要コンポーネントで構成されています。
 
@@ -28,7 +34,7 @@
 
 ## 🌟 主な機能と特徴
 
-### 1. WebAuthn Direct Registration (Tim Cappalli / WDR4W 草案準拠)
+### 1. OAuth PKCE によるパスキー直接プロビジョニング (Direct Registration)
 - **OAuth 2.0 PKCE 認可フロー**:
   - Android アプリ（Auth Tab）または AI エージェントから銀行の認可エンドポイント（`/oauth/authorize`）へアクセス。
   - フル権限（`full`）を持つマスターパスキーで生体認証・ログイン後、付与する権限スコープ（閲覧専用や送金上限）を選択して認可コードを発行。
@@ -244,7 +250,13 @@ sequenceDiagram
 
 # 🇺🇸 English
 
-This repository is a comprehensive demonstration showcasing a **Mock Banking Web Service** (GCP Cloud Run), **Automated Headless WebAuthn Authentication & Balance Inquiry** (AWS Lambda), and an **Android 14+ Credential Provider App**, implementing direct passkey provisioning based on Tim Cappalli's **[WebAuthn Direct Registration for Workforce (WDR4W)](https://github.com/timcappalli/explainers/tree/main/WebAuthnDirectRegistrationWorkforce)** explainer, **Scoped Passkeys** (granular permissions), and **WebAuthn Signal API**.
+This repository is a comprehensive demonstration showcasing a **Mock Banking Web Service** (GCP Cloud Run), **Automated Headless WebAuthn Authentication & Balance Inquiry** (AWS Lambda), and an **Android 14+ Credential Provider App**, implementing client-side **Direct Passkey Registration** via OAuth 2.0 PKCE, **Scoped Passkeys** (granular permissions), and the **WebAuthn Signal API**.
+
+> [!NOTE]
+> **💡 Relationship with WebAuthn Direct Registration for Workforce (WDR4W)**:  
+> The **[WebAuthn Direct Registration for Workforce (WDR4W)](https://github.com/timcappalli/explainers/tree/main/WebAuthnDirectRegistrationWorkforce)** explainer proposed by Tim Cappalli focuses specifically on enterprise and organizational deployments (**Managed Context / Workforce** use cases).  
+> 
+> In contrast, the approach demonstrated in this repository was conceived independently prior to the publication of the WDR4W draft, addressing **Non-Managed Context / Non-Workforce & Consumer / Agent** use cases (e.g. consumer banking, personal AI agents, scoped financial permission delegation without MDM or enterprise infrastructure). While paying maximum respect to Tim Cappalli's pioneering work in the FIDO/W3C community, this project distinctly explores permission-scoped autonomous delegation in unmanaged, consumer-facing environments.
 
 The project is organized into three major components:
 
@@ -260,7 +272,7 @@ The project is organized into three major components:
 
 ## 🌟 Key Features
 
-### 1. WebAuthn Direct Registration (Tim Cappalli / WDR4W Draft Spec)
+### 1. Direct Passkey Registration via OAuth 2.0 PKCE (Direct Registration)
 - **OAuth 2.0 PKCE Flow**:
   - Android App (via Auth Tab) or AI Agent connects to `/oauth/authorize`.
   - Authenticates with a full-access master passkey, chooses the requested operational scope, and issues an authorization code.
