@@ -404,7 +404,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "case \"${SDK_NAME}\" in\n  *iphonesimulator*)\n    if [ -d \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/PlugIns/MyCredManExtension.appex\" ]; then\n      echo \"Codesigning MyCredManExtension for simulator...\"\n      codesign --force --sign - --entitlements \"${PROJECT_DIR}/MyCredManExtension/MyCredManExtension.entitlements\" --timestamp=none --generate-entitlement-der \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/PlugIns/MyCredManExtension.appex\"\n    fi\n    ;;\nesac\n";
+			shellScript = "case \"${SDK_NAME}\" in\n  *iphonesimulator*)\n    EXT_DIR=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/PlugIns/MyCredManExtension.appex\"\n    if [ -d \"${EXT_DIR}\" ]; then\n      echo \"Codesigning MyCredManExtension for simulator...\"\n      codesign --force --sign - --entitlements \"${PROJECT_DIR}/MyCredManExtension/MyCredManExtension.entitlements\" --timestamp=none --generate-entitlement-der \"${EXT_DIR}\"\n    fi\n    ;;\nesac\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -535,7 +535,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyCredMan/Resources/MyCredMan.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = GTW6722F27;
 				ENABLE_DEBUG_DYLIB = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MyCredMan/Resources/Info.plist;
@@ -545,7 +545,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.mycredman;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -561,7 +561,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyCredMan/Resources/MyCredMan.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = GTW6722F27;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MyCredMan/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -570,7 +570,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.mycredman;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -584,7 +584,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyCredManExtension/MyCredManExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = GTW6722F27;
 				ENABLE_DEBUG_DYLIB = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MyCredManExtension/Info.plist;
@@ -595,7 +595,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.mycredman.extension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -610,7 +610,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyCredManExtension/MyCredManExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = GTW6722F27;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MyCredManExtension/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -620,7 +620,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.mycredman.extension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -636,7 +636,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = GTW6722F27;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -645,7 +645,7 @@
 					"@loader_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.mycredman.Tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -661,7 +661,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = GTW6722F27;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -670,7 +670,7 @@
 					"@loader_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.mycredman.Tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -685,7 +685,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = GTW6722F27;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -694,7 +694,7 @@
 					"@loader_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.mycredman.UITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.UITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -710,7 +710,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = GTW6722F27;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -719,7 +719,7 @@
 					"@loader_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.mycredman.UITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.UITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;

@@ -5,7 +5,7 @@ import AuthenticationServices
 public struct ContentView: View {
     @StateObject private var provisioningViewModel = PasskeyProvisioningViewModel()
     @ObservedObject private var dataManager = MyCredentialDataManager.shared
-    @State private var selectedTab: Int = 0
+    @State private var selectedTab: Int = 1
     
     public init() {}
     
@@ -26,6 +26,12 @@ public struct ContentView: View {
                     Label("保存済み (\(dataManager.credentials.count))", systemImage: "list.bullet.rectangle")
                 }
                 .tag(1)
+        }
+        .onChange(of: selectedTab) { _ in
+            dataManager.reload()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            dataManager.reload()
         }
         .onOpenURL { url in
             if url.host == "settings" {

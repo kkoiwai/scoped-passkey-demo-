@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.example.mycredman</string>
+	<string>com.exarnp1e.mycredman</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -28,7 +28,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.example.mycredman.oauth</string>
+			<string>com.exarnp1e.mycredman.oauth</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>mycredman</string>

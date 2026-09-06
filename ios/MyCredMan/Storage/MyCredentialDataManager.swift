@@ -4,14 +4,16 @@ import AuthenticationServices
 
 /// Local storage manager for passkeys and credentials, mirroring Android's MyCredentialDataManager.
 public final class MyCredentialDataManager: ObservableObject {
-    public static let appGroupIdentifier = "group.com.example.mycredman"
+    public static let appGroupIdentifier = "group.com.exarnp1e.mycredman"
     public static let shared = MyCredentialDataManager()
     
     private let storageKey = "PREF_CREDENTIAL_SET"
+    private let autoFillEnabledKey = "IS_AUTOFILL_ENABLED_CACHE"
     private let userDefaults: UserDefaults
     private let containerFileURL: URL?
     
     @Published public private(set) var credentials: [Credential] = []
+    @Published public var isAutoFillEnabled: Bool = false
     
     public init(userDefaults: UserDefaults? = nil) {
         let groupDefaults = UserDefaults(suiteName: MyCredentialDataManager.appGroupIdentifier)
@@ -23,12 +25,14 @@ public final class MyCredentialDataManager: ObservableObject {
             self.containerFileURL = nil
         }
         
+        self.isAutoFillEnabled = self.userDefaults.bool(forKey: autoFillEnabledKey)
         self.credentials = loadAll()
+        checkAutoFillStatus()
         syncWithSystemStore()
     }
     
     // MARK: - Credential Model
-    public struct Credential: Identifiable, Codable, Equatable {
+    public struct Credential: Identifiable, Codable, Equatable, Hashable {
         public var id: String {
             return "\(rpid):\(credentialId.base64URLEncodedString())"
         }
@@ -72,14 +76,51 @@ public final class MyCredentialDataManager: ObservableObject {
         current.removeAll { $0.rpid == credential.rpid && $0.credentialId == credential.credentialId }
         current.append(credential)
         saveAll(current)
-        registerIdentityWithSystemStore(credential)
         DispatchQueue.main.async {
             self.credentials = current
+        }
+        syncWithSystemStore()
+    }
+    
+    public func reload() {
+        let loaded = loadAll()
+        DispatchQueue.main.async {
+            self.credentials = loaded
+        }
+        checkAutoFillStatus()
+        syncWithSystemStore()
+    }
+    
+    public func checkAutoFillStatus(completion: ((Bool) -> Void)? = nil) {
+        if CommandLine.arguments.contains("--mock-autofill-disabled") {
+            DispatchQueue.main.async {
+                self.isAutoFillEnabled = false
+                completion?(false)
+            }
+            return
+        }
+        if CommandLine.arguments.contains("--mock-autofill-enabled") {
+            DispatchQueue.main.async {
+                self.isAutoFillEnabled = true
+                completion?(true)
+            }
+            return
+        }
+        
+        ASCredentialIdentityStore.shared.getState { state in
+            DispatchQueue.main.async {
+                self.isAutoFillEnabled = state.isEnabled
+                self.userDefaults.set(state.isEnabled, forKey: self.autoFillEnabledKey)
+                completion?(state.isEnabled)
+            }
         }
     }
     
     public func loadAll() -> [Credential] {
         let decoder = JSONDecoder()
+        _ = userDefaults.synchronize()
+        _ = UserDefaults.standard.synchronize()
+        
         // 1. Try App Group container file if available
         if let fileURL = containerFileURL, FileManager.default.fileExists(atPath: fileURL.path) {
             if let fileData = try? Data(contentsOf: fileURL),
@@ -88,14 +129,8 @@ public final class MyCredentialDataManager: ObservableObject {
             }
         }
         
-        // 2. Try App Group / standard UserDefaults
+        // 2. Try App Group UserDefaults
         if let data = userDefaults.data(forKey: storageKey),
-           let list = try? decoder.decode([Credential].self, from: data) {
-            return list
-        }
-        
-        // 3. Fallback to standard UserDefaults if suite is different
-        if userDefaults != .standard, let data = UserDefaults.standard.data(forKey: storageKey),
            let list = try? decoder.decode([Credential].self, from: data) {
             return list
         }
@@ -115,18 +150,18 @@ public final class MyCredentialDataManager: ObservableObject {
         var current = loadAll()
         current.removeAll { $0.rpid == rpid && $0.credentialId == credentialId }
         saveAll(current)
-        removeIdentityFromSystemStore(rpid: rpid, credentialId: credentialId)
         DispatchQueue.main.async {
             self.credentials = current
         }
+        syncWithSystemStore()
     }
     
     public func deleteAll() {
         saveAll([])
-        removeAllIdentitiesFromSystemStore()
         DispatchQueue.main.async {
             self.credentials = []
         }
+        syncWithSystemStore()
     }
     
     private func saveAll(_ list: [Credential]) {
@@ -135,7 +170,9 @@ public final class MyCredentialDataManager: ObservableObject {
         guard let data = try? encoder.encode(list) else { return }
         
         userDefaults.set(data, forKey: storageKey)
+        _ = userDefaults.synchronize()
         UserDefaults.standard.set(data, forKey: storageKey)
+        _ = UserDefaults.standard.synchronize()
         
         if let fileURL = containerFileURL {
             try? data.write(to: fileURL, options: .atomic)
@@ -145,67 +182,31 @@ public final class MyCredentialDataManager: ObservableObject {
     // MARK: - ASCredentialIdentityStore Synchronization
     public func syncWithSystemStore() {
         if #available(iOS 17.0, *) {
-            let identities = self.credentials.map { cred in
-                ASPasskeyCredentialIdentity(
-                    relyingPartyIdentifier: cred.rpid,
-                    userName: cred.displayName,
-                    credentialID: cred.credentialId,
-                    userHandle: cred.userHandle,
-                    recordIdentifier: cred.id
-                )
-            }
-            guard !identities.isEmpty else { return }
-            ASCredentialIdentityStore.shared.saveCredentialIdentities(identities) { success, error in
-                if let error = error {
-                    print("[MyCredentialDataManager] syncWithSystemStore error: \(error)")
-                } else {
-                    print("[MyCredentialDataManager] syncWithSystemStore registered \(identities.count) identities.")
+            let loaded = loadAll()
+            if loaded.isEmpty {
+                ASCredentialIdentityStore.shared.removeAllCredentialIdentities { success, error in
+                    if let error = error {
+                        print("[MyCredentialDataManager] removeAllCredentialIdentities error: \(error)")
+                    } else {
+                        print("[MyCredentialDataManager] removeAllCredentialIdentities successfully cleared system store.")
+                    }
                 }
-            }
-        }
-    }
-    
-    private func registerIdentityWithSystemStore(_ credential: Credential) {
-        if #available(iOS 17.0, *) {
-            let identity = ASPasskeyCredentialIdentity(
-                relyingPartyIdentifier: credential.rpid,
-                userName: credential.displayName,
-                credentialID: credential.credentialId,
-                userHandle: credential.userHandle,
-                recordIdentifier: credential.id
-            )
-            ASCredentialIdentityStore.shared.saveCredentialIdentities([identity]) { success, error in
-                if let error = error {
-                    print("[MyCredentialDataManager] registerIdentity error: \(error)")
-                } else {
-                    print("[MyCredentialDataManager] registerIdentity success for \(credential.displayName)")
+            } else {
+                let identities = loaded.map { cred in
+                    ASPasskeyCredentialIdentity(
+                        relyingPartyIdentifier: cred.rpid,
+                        userName: cred.displayName,
+                        credentialID: cred.credentialId,
+                        userHandle: cred.userHandle,
+                        recordIdentifier: cred.id
+                    )
                 }
-            }
-        }
-    }
-    
-    private func removeIdentityFromSystemStore(rpid: String, credentialId: Data) {
-        if #available(iOS 17.0, *) {
-            let identity = ASPasskeyCredentialIdentity(
-                relyingPartyIdentifier: rpid,
-                userName: "",
-                credentialID: credentialId,
-                userHandle: Data(),
-                recordIdentifier: nil
-            )
-            ASCredentialIdentityStore.shared.removeCredentialIdentities([identity]) { success, error in
-                if let error = error {
-                    print("[MyCredentialDataManager] removeIdentity error: \(error)")
-                }
-            }
-        }
-    }
-    
-    private func removeAllIdentitiesFromSystemStore() {
-        if #available(iOS 17.0, *) {
-            ASCredentialIdentityStore.shared.removeAllCredentialIdentities { success, error in
-                if let error = error {
-                    print("[MyCredentialDataManager] removeAllIdentities error: \(error)")
+                ASCredentialIdentityStore.shared.replaceCredentialIdentities(identities) { success, error in
+                    if let error = error {
+                        print("[MyCredentialDataManager] replaceCredentialIdentities error: \(error)")
+                    } else {
+                        print("[MyCredentialDataManager] replaceCredentialIdentities successfully updated \(identities.count) identities in system store.")
+                    }
                 }
             }
         }
