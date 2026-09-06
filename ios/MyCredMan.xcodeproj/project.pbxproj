@@ -1,0 +1,784 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		627FE5353ECD4E0E94D4D3E3 /* MyCredManExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 86C548FA352940D5895C5229 /* MyCredManExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		146D35213B244932808D94D5 /* MyCredManApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84923A10A33C4670875D9A48 /* MyCredManApp.swift */; };
+		4D9290F9E02D4A34B97DC286 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 266E3FD5C99147938DD43405 /* ContentView.swift */; };
+		7A3F744DA1D14744AEFB7E4B /* AuthConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = D934A560EBF54F6A8A4EB24A /* AuthConfig.swift */; };
+		914D05751E1E4731A7E57FB3 /* PkceUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B16745A21145E3B180CCC6 /* PkceUtil.swift */; };
+		15535ACD1C334F388BC52926 /* DirectPasskeyCreator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B4599B9D7784A579BF3FDAA /* DirectPasskeyCreator.swift */; };
+		1EB1DDB4F2174D619E1C0A4A /* OAuthWebAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BFDA138DD4A4A7BA7A2486B /* OAuthWebAuthManager.swift */; };
+		3569D718CD64422F916EE3BD /* PasskeyProvisioningClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16EE9DBDB9984EF9AA22F9DF /* PasskeyProvisioningClient.swift */; };
+		08476F899B424375A9945E1B /* PasskeyProvisioningViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7204FAC4A29E4C22AB71D3CD /* PasskeyProvisioningViewModel.swift */; };
+		B94BBD0B9C564120A39F67DA /* PasskeyProvisioningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 950673B632034CE480D356A1 /* PasskeyProvisioningView.swift */; };
+		9606EE684BE541FCACE034BC /* MyCredentialDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 208344A8063F4AB8A0A3C498 /* MyCredentialDataManager.swift */; };
+		F286CD659A7642A393B78E0C /* CredentialDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA7C710592B4E2393C2F127 /* CredentialDetailView.swift */; };
+		1BC9D69FB9F945B287998329 /* SavedPasskeysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 999EF5CD4D4A490C87EF2E2E /* SavedPasskeysView.swift */; };
+		237FBBE345734BEAB549F356 /* CredentialProviderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDFAF2B41CE74196ADC64400 /* CredentialProviderViewController.swift */; };
+		8FD47635D5CB4C7A899FB29F /* MyCredentialDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 208344A8063F4AB8A0A3C498 /* MyCredentialDataManager.swift */; };
+		B488E64E40C548AA94504B87 /* PkceUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B16745A21145E3B180CCC6 /* PkceUtil.swift */; };
+		0619F138278E4BE6B140377F /* DirectPasskeyCreator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B4599B9D7784A579BF3FDAA /* DirectPasskeyCreator.swift */; };
+		009453156B394ACC9DE0BFC4 /* DirectPasskeyCreatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 346437FD2D0E42A59F7FC01E /* DirectPasskeyCreatorTests.swift */; };
+		31CC051D9D774351B00F7E44 /* SafariPasskeyE2ETests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC4D6E3818D4A29A3AE7D8B /* SafariPasskeyE2ETests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8984D37EED554A018D7AE725 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E675BF25AB914BB9A21AB9AD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 03B9847BDC8742228F37E744;
+			remoteInfo = MyCredMan;
+		};
+		BBCAE80A0EC94E5A8F15C9AE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E675BF25AB914BB9A21AB9AD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 03B9847BDC8742228F37E744;
+			remoteInfo = MyCredMan;
+		};
+		AEFFEE46150C4403AE84564D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E675BF25AB914BB9A21AB9AD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EC2FE711487D4273865E861D;
+			remoteInfo = MyCredManExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F1C0D03AE9054893AA974047 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				627FE5353ECD4E0E94D4D3E3 /* MyCredManExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		33856BFBC2C549599D245780 /* MyCredMan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyCredMan.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		86C548FA352940D5895C5229 /* MyCredManExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MyCredManExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		53465A2146A04FBBAAE8844C /* MyCredManTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyCredManTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B960A42104674E7F8988D29D /* MyCredManUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyCredManUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		84923A10A33C4670875D9A48 /* MyCredManApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MyCredManApp.swift"; sourceTree = "<group>"; };
+		266E3FD5C99147938DD43405 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ContentView.swift"; sourceTree = "<group>"; };
+		D934A560EBF54F6A8A4EB24A /* AuthConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AuthConfig.swift"; sourceTree = "<group>"; };
+		47B16745A21145E3B180CCC6 /* PkceUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PkceUtil.swift"; sourceTree = "<group>"; };
+		3B4599B9D7784A579BF3FDAA /* DirectPasskeyCreator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DirectPasskeyCreator.swift"; sourceTree = "<group>"; };
+		9BFDA138DD4A4A7BA7A2486B /* OAuthWebAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OAuthWebAuthManager.swift"; sourceTree = "<group>"; };
+		16EE9DBDB9984EF9AA22F9DF /* PasskeyProvisioningClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PasskeyProvisioningClient.swift"; sourceTree = "<group>"; };
+		7204FAC4A29E4C22AB71D3CD /* PasskeyProvisioningViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PasskeyProvisioningViewModel.swift"; sourceTree = "<group>"; };
+		950673B632034CE480D356A1 /* PasskeyProvisioningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PasskeyProvisioningView.swift"; sourceTree = "<group>"; };
+		208344A8063F4AB8A0A3C498 /* MyCredentialDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MyCredentialDataManager.swift"; sourceTree = "<group>"; };
+		BFA7C710592B4E2393C2F127 /* CredentialDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CredentialDetailView.swift"; sourceTree = "<group>"; };
+		999EF5CD4D4A490C87EF2E2E /* SavedPasskeysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SavedPasskeysView.swift"; sourceTree = "<group>"; };
+		25C8C282920E4A059B279635 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info.plist"; sourceTree = "<group>"; };
+		50F2EC4174214455B8E500DA /* MyCredMan.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "MyCredMan.entitlements"; sourceTree = "<group>"; };
+		EDFAF2B41CE74196ADC64400 /* CredentialProviderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CredentialProviderViewController.swift"; sourceTree = "<group>"; };
+		54C7A1A84A9945B697C398DD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info.plist"; sourceTree = "<group>"; };
+		16E99B41D05340D29AB2E51B /* MyCredManExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "MyCredManExtension.entitlements"; sourceTree = "<group>"; };
+		346437FD2D0E42A59F7FC01E /* DirectPasskeyCreatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DirectPasskeyCreatorTests.swift"; sourceTree = "<group>"; };
+		8CC4D6E3818D4A29A3AE7D8B /* SafariPasskeyE2ETests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SafariPasskeyE2ETests.swift"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B681F750184C473BB056090F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3E5D655879E64888A339F68B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		42224DDA7AD148C0B4120D0B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E9EE7300F0974059B67AEAE0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		72CCEF566D5F476C88FBA3B4 = {
+			isa = PBXGroup;
+			children = (
+				7B46874A2E554AFC98397B63 /* MyCredMan */,
+				D29A578ADB344104A44908B9 /* MyCredManExtension */,
+				D7C1331F514F4B68B95AA8A4 /* MyCredManTests */,
+				A1CF27BBB1B248E888BA3670 /* MyCredManUITests */,
+				98BB6E860A6A426081C17EFF /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		98BB6E860A6A426081C17EFF /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				33856BFBC2C549599D245780 /* MyCredMan.app */,
+				86C548FA352940D5895C5229 /* MyCredManExtension.appex */,
+				53465A2146A04FBBAAE8844C /* MyCredManTests.xctest */,
+				B960A42104674E7F8988D29D /* MyCredManUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7B46874A2E554AFC98397B63 /* MyCredMan */ = {
+			isa = PBXGroup;
+			children = (
+				2303BE018E704E81A224F173 /* App */,
+				29BD64E0541A4334AB478A3F /* Provisioning */,
+				FBFC90CEEC7243709972C025 /* Storage */,
+				04A026E7483C4F7FA90821BC /* Views */,
+				7EB5D1A26DED453EBF010652 /* Resources */,
+			);
+			path = MyCredMan;
+			sourceTree = "<group>";
+		};
+		2303BE018E704E81A224F173 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				84923A10A33C4670875D9A48 /* MyCredManApp.swift */,
+				266E3FD5C99147938DD43405 /* ContentView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		29BD64E0541A4334AB478A3F /* Provisioning */ = {
+			isa = PBXGroup;
+			children = (
+				D934A560EBF54F6A8A4EB24A /* AuthConfig.swift */,
+				47B16745A21145E3B180CCC6 /* PkceUtil.swift */,
+				3B4599B9D7784A579BF3FDAA /* DirectPasskeyCreator.swift */,
+				9BFDA138DD4A4A7BA7A2486B /* OAuthWebAuthManager.swift */,
+				16EE9DBDB9984EF9AA22F9DF /* PasskeyProvisioningClient.swift */,
+				7204FAC4A29E4C22AB71D3CD /* PasskeyProvisioningViewModel.swift */,
+				950673B632034CE480D356A1 /* PasskeyProvisioningView.swift */,
+			);
+			path = Provisioning;
+			sourceTree = "<group>";
+		};
+		FBFC90CEEC7243709972C025 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				208344A8063F4AB8A0A3C498 /* MyCredentialDataManager.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		04A026E7483C4F7FA90821BC /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				BFA7C710592B4E2393C2F127 /* CredentialDetailView.swift */,
+				999EF5CD4D4A490C87EF2E2E /* SavedPasskeysView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		7EB5D1A26DED453EBF010652 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				25C8C282920E4A059B279635 /* Info.plist */,
+				50F2EC4174214455B8E500DA /* MyCredMan.entitlements */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		D29A578ADB344104A44908B9 /* MyCredManExtension */ = {
+			isa = PBXGroup;
+			children = (
+				EDFAF2B41CE74196ADC64400 /* CredentialProviderViewController.swift */,
+				54C7A1A84A9945B697C398DD /* Info.plist */,
+				16E99B41D05340D29AB2E51B /* MyCredManExtension.entitlements */,
+			);
+			path = MyCredManExtension;
+			sourceTree = "<group>";
+		};
+		D7C1331F514F4B68B95AA8A4 /* MyCredManTests */ = {
+			isa = PBXGroup;
+			children = (
+				346437FD2D0E42A59F7FC01E /* DirectPasskeyCreatorTests.swift */,
+			);
+			path = MyCredManTests;
+			sourceTree = "<group>";
+		};
+		A1CF27BBB1B248E888BA3670 /* MyCredManUITests */ = {
+			isa = PBXGroup;
+			children = (
+				8CC4D6E3818D4A29A3AE7D8B /* SafariPasskeyE2ETests.swift */,
+			);
+			path = MyCredManUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		03B9847BDC8742228F37E744 /* MyCredMan */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A0F3E24355B34154856DEFE5 /* Build configuration list for PBXNativeTarget "MyCredMan" */;
+			buildPhases = (
+				129B61D207DB4AE393A672AE /* Sources */,
+				B681F750184C473BB056090F /* Frameworks */,
+				269ADA240E9A43D0A6D7DD54 /* Resources */,
+				F1C0D03AE9054893AA974047 /* Embed App Extensions */,
+				1F5A7BE56069424FADFBC0F5 /* Sign Extension for Simulator */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AE0BCE694DB04CB5872E0D8B /* PBXTargetDependency */,
+			);
+			name = MyCredMan;
+			productName = MyCredMan;
+			productReference = 33856BFBC2C549599D245780 /* MyCredMan.app */;
+			productType = "com.apple.product-type.application";
+		};
+		EC2FE711487D4273865E861D /* MyCredManExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E679BE8AD6044AE6B8F86755 /* Build configuration list for PBXNativeTarget "MyCredManExtension" */;
+			buildPhases = (
+				FC0D245507DA4265A367AD16 /* Sources */,
+				3E5D655879E64888A339F68B /* Frameworks */,
+				1C299936248C48F7A3926E80 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MyCredManExtension;
+			productName = MyCredManExtension;
+			productReference = 86C548FA352940D5895C5229 /* MyCredManExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		F5E8B41F1A4B4291B58A8622 /* MyCredManTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DE4173EEB7E146039F182E0B /* Build configuration list for PBXNativeTarget "MyCredManTests" */;
+			buildPhases = (
+				00C78110260647C2B980147F /* Sources */,
+				42224DDA7AD148C0B4120D0B /* Frameworks */,
+				94D1537D9FF04D5799FD7F62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4CE0BCDE21D246AF8813BD29 /* PBXTargetDependency */,
+			);
+			name = MyCredManTests;
+			productName = MyCredManTests;
+			productReference = 53465A2146A04FBBAAE8844C /* MyCredManTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		B922C637ECC34AFBB5DB3EDD /* MyCredManUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CE4F8B35D60F4EE2B135BFF8 /* Build configuration list for PBXNativeTarget "MyCredManUITests" */;
+			buildPhases = (
+				3C79E8F714894CB6921CF12A /* Sources */,
+				E9EE7300F0974059B67AEAE0 /* Frameworks */,
+				1450E157FA044175A64F413B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				43D4820983224A0C992AD95B /* PBXTargetDependency */,
+			);
+			name = MyCredManUITests;
+			productName = MyCredManUITests;
+			productReference = B960A42104674E7F8988D29D /* MyCredManUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E675BF25AB914BB9A21AB9AD /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					03B9847BDC8742228F37E744 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					EC2FE711487D4273865E861D = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					F5E8B41F1A4B4291B58A8622 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = 03B9847BDC8742228F37E744;
+					};
+					B922C637ECC34AFBB5DB3EDD = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = 03B9847BDC8742228F37E744;
+					};
+				};
+			};
+			buildConfigurationList = D16B7D2AEB9D4742BE23AD1F /* Build configuration list for PBXProject "MyCredMan" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 72CCEF566D5F476C88FBA3B4;
+			productRefGroup = 98BB6E860A6A426081C17EFF /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				03B9847BDC8742228F37E744 /* MyCredMan */,
+				EC2FE711487D4273865E861D /* MyCredManExtension */,
+				F5E8B41F1A4B4291B58A8622 /* MyCredManTests */,
+				B922C637ECC34AFBB5DB3EDD /* MyCredManUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		269ADA240E9A43D0A6D7DD54 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1C299936248C48F7A3926E80 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		94D1537D9FF04D5799FD7F62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1450E157FA044175A64F413B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		1F5A7BE56069424FADFBC0F5 /* Sign Extension for Simulator */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Sign Extension for Simulator";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "case \"${SDK_NAME}\" in\n  *iphonesimulator*)\n    EXT_DIR=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/PlugIns/MyCredManExtension.appex\"\n    if [ -d \"${EXT_DIR}\" ]; then\n      echo \"Codesigning MyCredManExtension for simulator...\"\n      codesign --force --sign - --entitlements \"${PROJECT_DIR}/MyCredManExtension/MyCredManExtension.entitlements\" --timestamp=none --generate-entitlement-der \"${EXT_DIR}\"\n    fi\n    ;;\nesac\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		129B61D207DB4AE393A672AE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				146D35213B244932808D94D5 /* MyCredManApp.swift in Sources */,
+				4D9290F9E02D4A34B97DC286 /* ContentView.swift in Sources */,
+				7A3F744DA1D14744AEFB7E4B /* AuthConfig.swift in Sources */,
+				914D05751E1E4731A7E57FB3 /* PkceUtil.swift in Sources */,
+				15535ACD1C334F388BC52926 /* DirectPasskeyCreator.swift in Sources */,
+				1EB1DDB4F2174D619E1C0A4A /* OAuthWebAuthManager.swift in Sources */,
+				3569D718CD64422F916EE3BD /* PasskeyProvisioningClient.swift in Sources */,
+				08476F899B424375A9945E1B /* PasskeyProvisioningViewModel.swift in Sources */,
+				B94BBD0B9C564120A39F67DA /* PasskeyProvisioningView.swift in Sources */,
+				9606EE684BE541FCACE034BC /* MyCredentialDataManager.swift in Sources */,
+				F286CD659A7642A393B78E0C /* CredentialDetailView.swift in Sources */,
+				1BC9D69FB9F945B287998329 /* SavedPasskeysView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FC0D245507DA4265A367AD16 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				237FBBE345734BEAB549F356 /* CredentialProviderViewController.swift in Sources */,
+				8FD47635D5CB4C7A899FB29F /* MyCredentialDataManager.swift in Sources */,
+				B488E64E40C548AA94504B87 /* PkceUtil.swift in Sources */,
+				0619F138278E4BE6B140377F /* DirectPasskeyCreator.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		00C78110260647C2B980147F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				009453156B394ACC9DE0BFC4 /* DirectPasskeyCreatorTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3C79E8F714894CB6921CF12A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				31CC051D9D774351B00F7E44 /* SafariPasskeyE2ETests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4CE0BCDE21D246AF8813BD29 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 03B9847BDC8742228F37E744 /* MyCredMan */;
+			targetProxy = 8984D37EED554A018D7AE725 /* PBXContainerItemProxy */;
+		};
+		43D4820983224A0C992AD95B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 03B9847BDC8742228F37E744 /* MyCredMan */;
+			targetProxy = BBCAE80A0EC94E5A8F15C9AE /* PBXContainerItemProxy */;
+		};
+		AE0BCE694DB04CB5872E0D8B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EC2FE711487D4273865E861D /* MyCredManExtension */;
+			targetProxy = AEFFEE46150C4403AE84564D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A6003C8474C7400FA4E933A3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				ENABLE_DEBUG_DYLIB = NO;
+			};
+			name = Debug;
+		};
+		B928773DB7FB48F8B8DBCE22 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = "wholemodule";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		3360E84B804047BB9208DDC8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MyCredMan/Resources/MyCredMan.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GTW6722F27;
+				ENABLE_DEBUG_DYLIB = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MyCredMan/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		5B35A6678A634CFB800F7E4E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MyCredMan/Resources/MyCredMan.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GTW6722F27;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MyCredMan/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		BD53A7CF1BE84EBBA07CC520 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MyCredManExtension/MyCredManExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GTW6722F27;
+				ENABLE_DEBUG_DYLIB = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MyCredManExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.extension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A3DB5177F6B24FC083583B7B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MyCredManExtension/MyCredManExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GTW6722F27;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MyCredManExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.extension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		B07FFF34668544ECAA600621 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GTW6722F27;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MyCredMan.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MyCredMan";
+			};
+			name = Debug;
+		};
+		1EC43F70C7B04A44819C8BCF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GTW6722F27;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MyCredMan.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MyCredMan";
+			};
+			name = Release;
+		};
+		517A1ABBD04544B7897CF48C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GTW6722F27;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.UITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MyCredMan;
+				USES_XCTRUNNER = YES;
+			};
+			name = Debug;
+		};
+		858C5489D7B94BB5924031BF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GTW6722F27;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.UITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MyCredMan;
+				USES_XCTRUNNER = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D16B7D2AEB9D4742BE23AD1F /* Build configuration list for PBXProject "MyCredMan" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A6003C8474C7400FA4E933A3 /* Debug */,
+				B928773DB7FB48F8B8DBCE22 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A0F3E24355B34154856DEFE5 /* Build configuration list for PBXNativeTarget "MyCredMan" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3360E84B804047BB9208DDC8 /* Debug */,
+				5B35A6678A634CFB800F7E4E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E679BE8AD6044AE6B8F86755 /* Build configuration list for PBXNativeTarget "MyCredManExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BD53A7CF1BE84EBBA07CC520 /* Debug */,
+				A3DB5177F6B24FC083583B7B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DE4173EEB7E146039F182E0B /* Build configuration list for PBXNativeTarget "MyCredManTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B07FFF34668544ECAA600621 /* Debug */,
+				1EC43F70C7B04A44819C8BCF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CE4F8B35D60F4EE2B135BFF8 /* Build configuration list for PBXNativeTarget "MyCredManUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				517A1ABBD04544B7897CF48C /* Debug */,
+				858C5489D7B94BB5924031BF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = E675BF25AB914BB9A21AB9AD /* Project object */;
+}
