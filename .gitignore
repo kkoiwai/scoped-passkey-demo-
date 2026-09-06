@@ -48,3 +48,11 @@ yarn-error.log*
 .env.local
 web/data/store.json
 
+# iOS / Xcode
+ios/.derived_data/
+ios/.cache/
+*.xcuserstate
+project.xcworkspace/xcuserdata/
+*.xcuserdatad/
+DerivedData/
+.build/

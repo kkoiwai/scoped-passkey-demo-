@@ -20,11 +20,12 @@
 > 
 > 一方で、本リポジトリの提案は Tim 氏の仕様公開前から独自に着想されていたものであり、企業管理下ではない一般コンシューマーや AI エージェント（**Non-Managed Context / Non-Workforce**）へのパスキー権限委譲・直接発行（Scoped Passkey）を目的としています。Tim 氏の先駆的な議論に深く敬意を払いつつ、本プロジェクトでは「コンシューマー向け金融サービスにおける AI エージェントへの権限制御付き自動認証」という独自のユースケースを実証しています。
 
-本プロジェクトは以下の 3 つの主要コンポーネントで構成されています。
+本プロジェクトは以下の 4 つの主要コンポーネントで構成されています。
 
 1. **モック銀行 Web サービス (`web/` - [https://sp.exarnp1e.com](https://sp.exarnp1e.com))**: GCP Cloud Run 上で動作する、権限スコープ付きパスキー、WebAuthn Direct Registration、および WebAuthn Signal API 対応の銀行サービス。
 2. **AWS AI エージェント (`agent/` - [https://58p3ucbudc.execute-api.ap-northeast-1.amazonaws.com/](https://58p3ucbudc.execute-api.ap-northeast-1.amazonaws.com/))**: AWS Lambda (コンテナ) 上で Headless Chrome & CDP Virtual Authenticator を駆動し、Direct Registration で発行・保管したスコープ付きパスキーで自動ログイン・残高照会を行うエージェント。
 3. **Android クライアントアプリ (`app/`)**: 自前でパスキー鍵ペアを生成・管理する Credential Provider アプリ。OAuth 2.0 PKCE 認可フローを通じて、OS の標準登録ダイアログ（WebAuthn API）を経由することなく、アプリ内で直接 EC P-256 鍵ペアを生成してパスキーを発行・登録（Direct Registration）可能。
+4. **iOS クライアントアプリ (`ios/`)**: Android 版と同等の仕様を持つ SwiftUI クライアントアプリ。`ASWebAuthenticationSession` と PKCE による認可フロー、自前での CryptoKit `EC P-256` 鍵ペア直接生成・WebAuthn 登録レスポンス JSON 構築（Direct Registration）、およびパスキーローカル保管庫（保存・詳細・削除）を実装。
 
 > [!NOTE]
 > **PoC環境におけるデータ保持期間について (GCP Cloud Run)**:  
@@ -172,20 +173,48 @@ sequenceDiagram
 │   ├── Dockerfile                         # AWS Lambda コンテナ定義 (Chrome & AL2023)
 │   └── package.json
 │
-└── app/                                    # Android クライアントアプリ
-    ├── src/main/java/com/example/mycredman/
-    │   ├── MainActivity.kt                 # メイン画面 / Credential Provider
-    │   ├── MyCredentialDataManager.kt      # ローカルパスキー保管庫 (SharedPref/JSON)
-    │   ├── MyCredentialProviderService.kt  # Android 14 CredentialProviderService
-    │   └── provisioning/
-    │       ├── AuthConfig.kt               # エンドポイント設定 (sp.exarnp1e.com)
-    │       ├── DirectPasskeyCreator.kt     # 自アプリ内直接鍵生成・WebAuthn JSON構築
-    │       ├── OAuthAuthTabManager.kt      # AuthTabIntent / PKCE 管理
-    │       ├── PasskeyProvisioningClient.kt # API クライアント (Token, Options, Register)
-    │       ├── PasskeyProvisioningScreen.kt # Jetpack Compose UI
-    │       └── PasskeyProvisioningViewModel.kt
-    ├── src/main/res/                       # 多言語リソース (values/ & values-ja/)
-    └── src/main/AndroidManifest.xml
+├── app/                                    # Android クライアントアプリ
+│   ├── src/main/java/com/example/mycredman/
+│   │   ├── MainActivity.kt                 # メイン画面 / Credential Provider
+│   │   ├── MyCredentialDataManager.kt      # ローカルパスキー保管庫 (SharedPref/JSON)
+│   │   ├── MyCredentialProviderService.kt  # Android 14 CredentialProviderService
+│   │   └── provisioning/
+│   │       ├── AuthConfig.kt               # エンドポイント設定 (sp.exarnp1e.com)
+│   │       ├── DirectPasskeyCreator.kt     # 自アプリ内直接鍵生成・WebAuthn JSON構築
+│   │       ├── OAuthAuthTabManager.kt      # AuthTabIntent / PKCE 管理
+│   │       ├── PasskeyProvisioningClient.kt # API クライアント (Token, Options, Register)
+│   │       ├── PasskeyProvisioningScreen.kt # Jetpack Compose UI
+│   │       └── PasskeyProvisioningViewModel.kt
+│   ├── src/main/res/                       # 多言語リソース (values/ & values-ja/)
+│   └── src/main/AndroidManifest.xml
+│
+└── ios/                                    # iOS クライアントアプリ (SwiftUI)
+    ├── MyCredMan/
+    │   ├── App/
+    │   │   ├── MyCredManApp.swift          # App Entry point & URL Scheme handle
+    │   │   └── ContentView.swift            # 2-Tab View (TabView)
+    │   ├── Provisioning/
+    │   │   ├── AuthConfig.swift             # エンドポイント設定 (sp.exarnp1e.com)
+    │   │   ├── PkceUtil.swift               # PKCE code_verifier / code_challenge (S256)
+    │   │   ├── DirectPasskeyCreator.swift   # CryptoKit EC P-256 鍵生成・WebAuthn JSON 構築
+    │   │   ├── OAuthWebAuthManager.swift    # ASWebAuthenticationSession 管理
+    │   │   ├── PasskeyProvisioningClient.swift # URLSession API クライアント
+    │   │   ├── PasskeyProvisioningViewModel.swift
+    │   │   └── PasskeyProvisioningView.swift # SwiftUI 画面 (ステッパー・プレビュー)
+    │   ├── Storage/
+    │   │   └── MyCredentialDataManager.swift # パスキー保管庫 (JSON/UserDefaults)
+    │   ├── Views/
+    │   │   ├── SavedPasskeysView.swift      # 保存済みパスキー一覧画面 (AutoFill 設定案内含む)
+    │   │   └── CredentialDetailView.swift   # パスキー詳細 & 削除確認画面
+    │   └── Resources/
+    │       ├── Info.plist                   # mycredman URL Scheme & Extension Capabilities 定義
+    │       └── MyCredMan.entitlements       # AutoFill Credential Provider Entitlement
+    ├── MyCredManExtension/                  # iOS AutoFill Credential Provider Extension
+    │   ├── CredentialProviderViewController.swift # ASCredentialProviderViewController 実装
+    │   ├── Info.plist                       # com.apple.credential-provider-service 定義
+    │   └── MyCredManExtension.entitlements  # AutoFill Credential Provider Entitlement
+    ├── MyCredManTests/                      # 単体テスト (暗号・WebAuthn検証)
+    └── MyCredMan.xcodeproj/                 # Xcode プロジェクト
 ```
 
 ---
@@ -246,6 +275,18 @@ sequenceDiagram
   ```
 - **実行**: Android Studio から `app` を起動。
 
+### 4. iOS アプリのビルド・実行
+- **要件**: Xcode 15.0 以降 (macOS), iOS 16.0+ シミュレータまたは実機。
+- **ビルド**:
+  ```bash
+  xcodebuild -project ios/MyCredMan.xcodeproj -scheme MyCredMan -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
+  ```
+- **テストビルド**:
+  ```bash
+  xcodebuild -project ios/MyCredMan.xcodeproj -scheme MyCredMan -destination 'generic/platform=iOS Simulator' build-for-testing CODE_SIGNING_ALLOWED=NO
+  ```
+- **実行**: Xcode から `ios/MyCredMan.xcodeproj` を開き、シミュレータまたは実機で実行。
+
 ---
 
 # 🇺🇸 English
@@ -258,11 +299,12 @@ This repository is a comprehensive demonstration showcasing a **Mock Banking Web
 > 
 > In contrast, the approach demonstrated in this repository was conceived independently prior to the publication of the WDR4W draft, addressing **Non-Managed Context / Non-Workforce & Consumer / Agent** use cases (e.g. consumer banking, personal AI agents, scoped financial permission delegation without MDM or enterprise infrastructure). While paying maximum respect to Tim Cappalli's pioneering work in the FIDO/W3C community, this project distinctly explores permission-scoped autonomous delegation in unmanaged, consumer-facing environments.
 
-The project is organized into three major components:
+The project is organized into four major components:
 
 1. **Mock Banking Web Service (`web/` - [https://sp.exarnp1e.com](https://sp.exarnp1e.com))**: Express service deployed on GCP Cloud Run supporting Scoped Passkeys, WebAuthn Direct Registration, and Signal API.
 2. **AWS AI Agent (`agent/` - [https://58p3ucbudc.execute-api.ap-northeast-1.amazonaws.com/](https://58p3ucbudc.execute-api.ap-northeast-1.amazonaws.com/))**: Serverless container on AWS Lambda utilizing Headless Chrome and CDP Virtual Authenticator for automated passkey authentication and balance scraping using directly enrolled passkeys.
 3. **Android Client App (`app/`)**: Credential Provider application with self-contained passkey generation and management. Supports direct client-side EC P-256 keypair creation and registration via OAuth 2.0 Authorization Code Flow (PKCE) without invoking OS-level WebAuthn platform dialogs (Direct Registration).
+4. **iOS Client App (`ios/`)**: SwiftUI client application mirroring the Android specification. Features OAuth 2.0 PKCE via `ASWebAuthenticationSession`, direct client-side EC P-256 key generation and WebAuthn registration JSON construction using CryptoKit (Direct Registration), and a local passkey vault (view, inspect, and delete).
 
 > [!NOTE]
 > **Ephemeral In-Memory Data Store (GCP Cloud Run)**:  
@@ -337,3 +379,15 @@ aws lambda update-function-code --function-name scoped-passkey-agent --image-uri
 ```bash
 ./gradlew assembleDebug testDebugUnitTest
 ```
+
+### 4. iOS App
+- **Requirements**: Xcode 15.0+ (macOS), iOS 16.0+ Simulator or physical device.
+- **Build**:
+  ```bash
+  xcodebuild -project ios/MyCredMan.xcodeproj -scheme MyCredMan -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
+  ```
+- **Test Build**:
+  ```bash
+  xcodebuild -project ios/MyCredMan.xcodeproj -scheme MyCredMan -destination 'generic/platform=iOS Simulator' build-for-testing CODE_SIGNING_ALLOWED=NO
+  ```
+- **Run**: Open `ios/MyCredMan.xcodeproj` in Xcode and launch on a simulator or device.
