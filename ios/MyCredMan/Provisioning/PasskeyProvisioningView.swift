@@ -27,16 +27,24 @@ public struct PasskeyProvisioningView: View {
             .padding(16)
         }
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .confirmationAction) {
                 Button(action: {
-                    if #available(iOS 17.0, *) {
+                    if #available(iOS 17.0, macOS 14.0, *) {
                         ASSettingsHelper.openCredentialProviderAppSettings { error in
                             if let error = error {
                                 print("Error opening settings: \(error)")
                             }
                         }
-                    } else if let url = URL(string: UIApplication.openSettingsURLString) {
-                        UIApplication.shared.open(url)
+                    } else {
+                        #if canImport(UIKit)
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                        #elseif canImport(AppKit)
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.Passwords") {
+                            NSWorkspace.shared.open(url)
+                        }
+                        #endif
                     }
                 }) {
                     Image(systemName: "gearshape")
@@ -59,7 +67,7 @@ public struct PasskeyProvisioningView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(Color(.secondarySystemBackground))
+        .background(Color.secondarySystemBackgroundCompat)
         .cornerRadius(16)
     }
     
@@ -80,7 +88,7 @@ public struct PasskeyProvisioningView: View {
             configItem(label: "Redirect URI", value: AuthConfig.redirectUri)
         }
         .padding(14)
-        .background(Color(.tertiarySystemBackground))
+        .background(Color.tertiarySystemBackgroundCompat)
         .cornerRadius(12)
     }
     
@@ -157,7 +165,7 @@ public struct PasskeyProvisioningView: View {
             )
         }
         .padding(16)
-        .background(Color(.secondarySystemBackground))
+        .background(Color.secondarySystemBackgroundCompat)
         .cornerRadius(16)
     }
     
@@ -296,7 +304,7 @@ public struct PasskeyProvisioningView: View {
                         .font(.system(.caption2, design: .monospaced))
                         .foregroundColor(.secondary)
                         .padding(8)
-                        .background(Color(.systemBackground))
+                        .background(Color.systemBackgroundCompat)
                         .cornerRadius(6)
                 }
                 
@@ -320,7 +328,7 @@ public struct PasskeyProvisioningView: View {
                             .fontWeight(.medium)
                             .frame(maxWidth: .infinity)
                             .frame(height: 40)
-                            .background(Color(.tertiarySystemFill))
+                            .background(Color.gray.opacity(0.2))
                             .foregroundColor(.primary)
                             .cornerRadius(8)
                     }

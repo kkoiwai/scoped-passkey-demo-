@@ -5,6 +5,7 @@ import AuthenticationServices
 public struct ContentView: View {
     @StateObject private var provisioningViewModel = PasskeyProvisioningViewModel()
     @ObservedObject private var dataManager = MyCredentialDataManager.shared
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab: Int = 1
     
     public init() {}
@@ -14,7 +15,9 @@ public struct ContentView: View {
             NavigationStack {
                 PasskeyProvisioningView(viewModel: provisioningViewModel)
                     .navigationTitle("Passkey Provisioning")
+                    #if os(iOS) || targetEnvironment(macCatalyst)
                     .navigationBarTitleDisplayMode(.inline)
+                    #endif
             }
             .tabItem {
                 Label("パスキー発行", systemImage: "key.fill")
@@ -30,12 +33,14 @@ public struct ContentView: View {
         .onChange(of: selectedTab) { _ in
             dataManager.reload()
         }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            dataManager.reload()
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                dataManager.reload()
+            }
         }
         .onOpenURL { url in
             if url.host == "settings" {
-                if #available(iOS 17.0, *) {
+                if #available(iOS 17.0, macOS 14.0, *) {
                     ASSettingsHelper.openCredentialProviderAppSettings { error in
                         print("Open settings result: \(String(describing: error))")
                     }

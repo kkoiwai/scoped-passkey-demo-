@@ -3,10 +3,13 @@ import AuthenticationServices
 
 #if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
 #endif
 
 /// Manages OAuth 2.0 Authorization flow using ASWebAuthenticationSession with PKCE.
 /// Mirrors Android's OAuthAuthTabManager.
+@MainActor
 public final class OAuthWebAuthManager: NSObject, ASWebAuthenticationPresentationContextProviding {
     
     public struct AuthSession {
@@ -26,17 +29,17 @@ public final class OAuthWebAuthManager: NSObject, ASWebAuthenticationPresentatio
         public var errorDescription: String? {
             switch self {
             case .userCancelled:
-                return "ユーザーによって認可がキャンセルされました。"
+                return "ユーザーによって認証がキャンセルされました。"
             case .stateMismatch:
-                return "State mismatch! Possible CSRF attack."
+                return "セキュリティエラー: state パラメータが一致しません。"
             case .missingCode:
-                return "認可コードが見つかりません。"
-            case .oauthServerError(let msg):
-                return "OAuth エラー: \(msg)"
+                return "認可コード (code) がレスポンスに含まれていません。"
+            case .oauthServerError(let desc):
+                return "OAuth 認可サーバーエラー: \(desc)"
             case .invalidUrl:
-                return "無効な認可URLです。"
-            case .unknown(let msg):
-                return "認可失敗: \(msg)"
+                return "無効な認可エンドポイント URL です。"
+            case .unknown(let desc):
+                return "予期せぬエラー: \(desc)"
             }
         }
     }
@@ -51,7 +54,15 @@ public final class OAuthWebAuthManager: NSObject, ASWebAuthenticationPresentatio
            let window = windowScene.windows.first(where: { $0.isKeyWindow }) {
             return window
         }
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            return window
+        }
         return ASPresentationAnchor()
+    }
+    #elseif canImport(AppKit)
+    public func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        return NSApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? NSApplication.shared.windows.first ?? ASPresentationAnchor()
     }
     #endif
 

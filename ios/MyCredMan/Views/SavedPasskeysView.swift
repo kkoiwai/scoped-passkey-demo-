@@ -53,12 +53,16 @@ public struct SavedPasskeysView: View {
                     }
                 }
             }
+            #if os(iOS) || targetEnvironment(macCatalyst)
             .listStyle(.insetGrouped)
-            .navigationTitle("Saved Passkeys")
             .navigationBarTitleDisplayMode(.inline)
+            #else
+            .listStyle(.inset)
+            #endif
+            .navigationTitle("Saved Passkeys")
             .toolbar {
                 if !dataManager.credentials.isEmpty {
-                    ToolbarItem(placement: .navigationBarTrailing) {
+                    ToolbarItem(placement: .confirmationAction) {
                         Button(role: .destructive) {
                             showClearAllAlert = true
                         } label: {
@@ -169,7 +173,7 @@ public struct SavedPasskeysView: View {
                     .foregroundColor(.secondary)
                 
                 HStack(spacing: 12) {
-                    if #available(iOS 18.0, *) {
+                    if #available(iOS 18.0, macOS 15.0, *) {
                         Button(action: {
                             ASSettingsHelper.requestToTurnOnCredentialProviderExtension { enabled in
                                 print("Credential provider turned on: \(enabled)")
@@ -193,21 +197,29 @@ public struct SavedPasskeysView: View {
                     }
                     
                     Button(action: {
-                        if #available(iOS 17.0, *) {
+                        if #available(iOS 17.0, macOS 14.0, *) {
                             ASSettingsHelper.openCredentialProviderAppSettings { error in
                                 if let error = error {
                                     print("Error opening settings: \(error)")
                                 }
                             }
-                        } else if let url = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(url)
+                        } else {
+                            #if canImport(UIKit)
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                            #elseif canImport(AppKit)
+                            if let url = URL(string: "x-apple.systempreferences:com.apple.Passwords") {
+                                NSWorkspace.shared.open(url)
+                            }
+                            #endif
                         }
                     }) {
                         Text("設定を開く")
                             .font(.caption.bold())
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(Color(.systemGray5))
+                            .background(Color.gray.opacity(0.18))
                             .foregroundColor(.primary)
                             .cornerRadius(8)
                     }

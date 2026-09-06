@@ -70,7 +70,9 @@ public struct CredentialDetailView: View {
         }
         .padding(20)
         .navigationTitle("Passkey Details")
+        #if os(iOS) || targetEnvironment(macCatalyst)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .alert("Are you sure to delete?", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {

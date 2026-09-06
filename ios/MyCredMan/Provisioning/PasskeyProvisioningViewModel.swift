@@ -38,11 +38,11 @@ public final class PasskeyProvisioningViewModel: ObservableObject {
     private let client: PasskeyProvisioningClient
     
     public init(
-        authManager: OAuthWebAuthManager = OAuthWebAuthManager(),
-        client: PasskeyProvisioningClient = PasskeyProvisioningClient()
+        authManager: OAuthWebAuthManager? = nil,
+        client: PasskeyProvisioningClient? = nil
     ) {
-        self.authManager = authManager
-        self.client = client
+        self.authManager = authManager ?? OAuthWebAuthManager()
+        self.client = client ?? PasskeyProvisioningClient()
     }
     
     /// Starts the Provisioning flow by opening ASWebAuthenticationSession for OAuth 2.0 PKCE authentication.

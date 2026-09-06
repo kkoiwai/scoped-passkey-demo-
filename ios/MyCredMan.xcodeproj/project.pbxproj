@@ -20,6 +20,7 @@
 		9606EE684BE541FCACE034BC /* MyCredentialDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 208344A8063F4AB8A0A3C498 /* MyCredentialDataManager.swift */; };
 		F286CD659A7642A393B78E0C /* CredentialDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA7C710592B4E2393C2F127 /* CredentialDetailView.swift */; };
 		1BC9D69FB9F945B287998329 /* SavedPasskeysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 999EF5CD4D4A490C87EF2E2E /* SavedPasskeysView.swift */; };
+		A38F142D8E6B4A3C910245E1 /* ThemeColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49012CE8F1A467DB03C9E24 /* ThemeColors.swift */; };
 		237FBBE345734BEAB549F356 /* CredentialProviderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDFAF2B41CE74196ADC64400 /* CredentialProviderViewController.swift */; };
 		8FD47635D5CB4C7A899FB29F /* MyCredentialDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 208344A8063F4AB8A0A3C498 /* MyCredentialDataManager.swift */; };
 		B488E64E40C548AA94504B87 /* PkceUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47B16745A21145E3B180CCC6 /* PkceUtil.swift */; };
@@ -83,6 +84,7 @@
 		208344A8063F4AB8A0A3C498 /* MyCredentialDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MyCredentialDataManager.swift"; sourceTree = "<group>"; };
 		BFA7C710592B4E2393C2F127 /* CredentialDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CredentialDetailView.swift"; sourceTree = "<group>"; };
 		999EF5CD4D4A490C87EF2E2E /* SavedPasskeysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SavedPasskeysView.swift"; sourceTree = "<group>"; };
+		B49012CE8F1A467DB03C9E24 /* ThemeColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ThemeColors.swift"; sourceTree = "<group>"; };
 		25C8C282920E4A059B279635 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info.plist"; sourceTree = "<group>"; };
 		50F2EC4174214455B8E500DA /* MyCredMan.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "MyCredMan.entitlements"; sourceTree = "<group>"; };
 		EDFAF2B41CE74196ADC64400 /* CredentialProviderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CredentialProviderViewController.swift"; sourceTree = "<group>"; };
@@ -201,6 +203,7 @@
 		7EB5D1A26DED453EBF010652 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				B49012CE8F1A467DB03C9E24 /* ThemeColors.swift */,
 				25C8C282920E4A059B279635 /* Info.plist */,
 				50F2EC4174214455B8E500DA /* MyCredMan.entitlements */,
 			);
@@ -425,6 +428,7 @@
 				9606EE684BE541FCACE034BC /* MyCredentialDataManager.swift in Sources */,
 				F286CD659A7642A393B78E0C /* CredentialDetailView.swift in Sources */,
 				1BC9D69FB9F945B287998329 /* SavedPasskeysView.swift in Sources */,
+				A38F142D8E6B4A3C910245E1 /* ThemeColors.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -535,6 +539,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyCredMan/Resources/MyCredMan.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
 				DEVELOPMENT_TEAM = GTW6722F27;
 				ENABLE_DEBUG_DYLIB = NO;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -547,6 +552,8 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -561,6 +568,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyCredMan/Resources/MyCredMan.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
 				DEVELOPMENT_TEAM = GTW6722F27;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MyCredMan/Resources/Info.plist;
@@ -572,6 +580,8 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -584,6 +594,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyCredManExtension/MyCredManExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
 				DEVELOPMENT_TEAM = GTW6722F27;
 				ENABLE_DEBUG_DYLIB = NO;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -598,6 +609,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -610,6 +623,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyCredManExtension/MyCredManExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
 				DEVELOPMENT_TEAM = GTW6722F27;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MyCredManExtension/Info.plist;
@@ -623,6 +637,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.exarnp1e.mycredman.extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
