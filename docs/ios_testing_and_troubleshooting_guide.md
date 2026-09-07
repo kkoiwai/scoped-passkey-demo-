@@ -379,3 +379,40 @@ iOS Credential Provider / Passkey 機能を実装・リリースする際は、�
 - [ ] **空配列判定**: `isEmpty` で空配列を無視せず、0件データを「正常なクリア状態」として扱っているか？
 - [ ] **実機テスト**: Safari からの新規登録（Registration）とログイン（Assertion）が実機物理デバイスで PASS しているか？
 - [ ] **UI スワイプ削除**: リストから個別削除した際、即座に OS の AutoFill 候補からも消去されるか？
+
+---
+
+## 9. macOS / Mac Catalyst 対応時の特有問題と「続ける」無反応バグ
+
+### 発生した事象
+Mac Catalyst を用いて macOS 向けにビルドしたアプリにおいて、Safari でパスキーの「作成（新規登録）」または「認証（サインイン）」を試した際、Safari のネイティブモーダルシートが表示されるものの、**「続ける（Continue）」ボタンを押しても無反応で固まる（シートが進まない）**。
+
+### 根本原因の究明プロセス
+macOS のシステムログを `log show` で追跡した結果、以下の致命的エラーが判明：
+
+```text
+com.apple.AuthenticationServices.Helper: Failed to start plugin; pkd returned an error: Error Domain=PlugInKit Code=4 "RBSLaunchRequest error trying to launch plugin com.exarnp1e.mycredman.extension: Launch failed. Launchd job spawn failed. NSPOSIXErrorDomain Code=163"
+kernel: (Sandbox) Sandbox: hook..execve() killing xpcproxy[pid=95938]: (err=22) failed to assign builtin profile
+kernel: (AppleSystemPolicy) ASP: Security policy would not allow process: 95938, .../MyCredManExtension.appex/Contents/MacOS/MyCredManExtension
+launchd: xpcproxy exited due to OS_REASON_EXEC (namespace: 9 code: 0x8)
+```
+
+1. **`com.apple.security.app-sandbox` 欠落による Kernel キル**:
+   - iOS では全アプリ・機能拡張がデフォルトで OS により強制サンドボックス化されるため、entitlements に `app-sandbox` の明示指定は不要。
+   - **しかし macOS では、App Extension (`.appex`) はカーネルの Sandbox Policy によりサンドボックス化が義務付けられている**。
+   - Extension の entitlements に `<key>com.apple.security.app-sandbox</key><true/>` が欠落していたため、`launchd` の `xpcproxy` がバイナリを実行（`execve`）しようとした瞬間にカーネルが `(err=22) failed to assign builtin profile` でプロセスを即死（SIGKILL）させていた。
+   - その結果、Safari 側のシートは Extension からの応答（`complete...`）を永久に待ち続け、「続ける」ボタンが無反応になった。
+
+2. **Extension 内での `ASCredentialIdentityStore` 呼び出しの回避**:
+   - `ASCredentialIdentityStore` は **ホストアプリ（メインアプリ）** が OS と同期するための API であり、サンドボックス化された Extension 内部から呼び出すと排他制御やパーミッションでブロックされるリスクがある。
+   - `Bundle.main.bundlePath.hasSuffix(".appex")` で判定し、Extension 実行時はストア同期をスキップして App Group (`credentials.json`) の読み書きのみに専念させる必要がある。
+
+3. **アサーション・登録の未完了ハングアップ防止**:
+   - 対象ドメインのパスキーが見つからなかった場合に `return` だけで終了すると、OS シートがタイムアウトまで固まる。
+   - 必ず `extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.credentialIdentityNotFound.rawValue, ...))` を呼び出して速やかに OS に通知すること。
+
+### 解決策のまとめ（macOS / Catalyst 必須設定）
+1. `MyCredManExtension.entitlements` に `com.apple.security.app-sandbox = true` を追加。
+2. `MyCredentialDataManager` で `isRunningInExtension` フラグを導入し、Extension 内での不要な `ASCredentialIdentityStore` 呼び出しを抑止。
+3. `prepareInterface(forPasskeyRegistration:)` および `handleAssertionFlow` での即時応答・エラー通知を徹底。
+

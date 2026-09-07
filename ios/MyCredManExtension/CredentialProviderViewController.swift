@@ -146,14 +146,23 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     // MARK: - ASCredentialProviderViewController Overrides
     
     override func prepareCredentialList(for serviceIdentifiers: [ASCredentialServiceIdentifier]) {
-        let domains = serviceIdentifiers.map { $0.identifier }.joined(separator: ", ")
-        statusLabel.text = "リクエスト元: \(domains.isEmpty ? "sp.exarnp1e.com" : domains)"
+        let rpId = serviceIdentifiers.first?.identifier ?? "sp.exarnp1e.com"
+        NSLog("[CredentialProvider] prepareCredentialList fallback called for %@", rpId)
+        if #available(iOS 17.0, macOS 14.0, *) {
+            handleAssertionFlow(rpId: rpId, clientDataHash: Data(), allowedCredentialIds: [])
+        } else {
+            extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue, userInfo: nil))
+        }
     }
     
     @available(iOS 17.0, *)
     override func prepareCredentialList(for serviceIdentifiers: [ASCredentialServiceIdentifier], requestParameters: ASPasskeyCredentialRequestParameters) {
-        let domains = serviceIdentifiers.map { $0.identifier }.joined(separator: ", ")
-        statusLabel.text = "リクエスト元: \(domains.isEmpty ? "sp.exarnp1e.com" : domains)"
+        let rpId = requestParameters.relyingPartyIdentifier
+        let clientDataHash = requestParameters.clientDataHash
+        let allowed = requestParameters.allowedCredentials
+        NSLog("[CredentialProvider] prepareCredentialList with requestParameters: rpId=%@, clientDataHash len=%ld, allowedCreds=%ld",
+              rpId, clientDataHash.count, allowed.count)
+        handleAssertionFlow(rpId: rpId, clientDataHash: clientDataHash, allowedCredentialIds: allowed)
     }
     
     override func provideCredentialWithoutUserInteraction(for credentialIdentity: ASPasswordCredentialIdentity) {
@@ -183,14 +192,15 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         
         // Match by credentialId first, then by rpId
         guard let cred = allCreds.first(where: { !credentialId.isEmpty && $0.credentialId == credentialId }) ??
-                         allCreds.first(where: { $0.rpid == rpId || rpId.hasSuffix($0.rpid) || $0.rpid.hasSuffix(rpId) }),
+                         allCreds.first(where: { $0.rpid == rpId || rpId.hasSuffix($0.rpid) || $0.rpid.hasSuffix(rpId) }) ??
+                         allCreds.first,
               let privateKey = cred.privateKey else {
             NSLog("[CredentialProvider] Credential not found for rpId: %@, credId: %@", rpId, credentialId.base64URLEncodedString())
             extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.credentialIdentityNotFound.rawValue, userInfo: [NSLocalizedDescriptionKey: "Passkey credential not found"]))
             return
         }
         
-        let effectiveRpId = cred.rpid.isEmpty ? rpId : cred.rpid
+        let effectiveRpId = !rpId.isEmpty ? rpId : (cred.rpid.isEmpty ? "sp.exarnp1e.com" : cred.rpid)
         do {
             let assertion = try DirectPasskeyCreator.generateAssertionSignature(
                 rpId: effectiveRpId,
@@ -221,7 +231,9 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     
     @available(iOS 17.0, *)
     override func prepareInterface(forPasskeyRegistration registrationRequest: any ASCredentialRequest) {
+        NSLog("[CredentialProvider] prepareInterface(forPasskeyRegistration:) called: %@", String(describing: registrationRequest))
         guard let passkeyRequest = registrationRequest as? ASPasskeyCredentialRequest else {
+            NSLog("[CredentialProvider] Invalid passkey registration request: %@", String(describing: registrationRequest))
             extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue, userInfo: [NSLocalizedDescriptionKey: "Invalid passkey registration request"]))
             return
         }
@@ -229,28 +241,29 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         let clientDataHash = passkeyRequest.clientDataHash
         let passkeyIdentity = passkeyRequest.credentialIdentity as? ASPasskeyCredentialIdentity
         let rpId = passkeyIdentity?.relyingPartyIdentifier ?? passkeyRequest.credentialIdentity.serviceIdentifier.identifier
+        let effectiveRpId = !rpId.isEmpty ? rpId : "sp.exarnp1e.com"
         let rawUserName = passkeyIdentity?.userName ?? ""
         let userName = (!rawUserName.isEmpty && rawUserName != "User") ? rawUserName : "alice@example.com"
         let userHandle = passkeyIdentity?.userHandle ?? Data()
         
         subtitleLabel.text = "✨ パスキーを新規作成"
-        statusLabel.text = "サイト: \(rpId)\nアカウント: \(userName)"
+        statusLabel.text = "サイト: \(effectiveRpId)\nアカウント: \(userName)"
         actionButton.setTitle("パスキーを登録", for: .normal)
         actionButton.isHidden = false
         
         self.pendingAction = { [weak self] in
             guard let self = self else { return }
             do {
-                let materials = try DirectPasskeyCreator.generatePasskeyMaterials(rpId: rpId)
+                let materials = try DirectPasskeyCreator.generatePasskeyMaterials(rpId: effectiveRpId)
                 let regCred = ASPasskeyRegistrationCredential(
-                    relyingParty: rpId,
+                    relyingParty: effectiveRpId,
                     clientDataHash: clientDataHash,
                     credentialID: materials.credentialId,
                     attestationObject: materials.attestationObject
                 )
                 
                 let record = MyCredentialDataManager.Credential(
-                    rpid: rpId,
+                    rpid: effectiveRpId,
                     serviceName: "Scoped Passkey Bank",
                     credentialId: materials.credentialId,
                     userHandle: userHandle,
@@ -260,24 +273,25 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                 )
                 MyCredentialDataManager.shared.save(record)
                 
-                print("[CredentialProvider] Completing passkey registration for \(userName) on \(rpId)...")
+                NSLog("[CredentialProvider] Completing passkey registration for %@ on %@...", userName, effectiveRpId)
                 self.extensionContext.completeRegistrationRequest(using: regCred) { expired in
-                    print("[CredentialProvider] Registration request finished. Expired: \(expired)")
+                    NSLog("[CredentialProvider] Registration request finished. Expired: %d", expired)
                 }
             } catch {
-                print("[CredentialProvider] Passkey registration error: \(error)")
+                NSLog("[CredentialProvider] Passkey registration error: %@", error.localizedDescription)
                 self.extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue, userInfo: [NSLocalizedDescriptionKey: error.localizedDescription]))
             }
         }
         
-        // Auto-fulfill after 0.4s to guarantee seamless flow
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+        // Auto-fulfill after 0.2s to guarantee seamless flow
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             self?.executePendingAction()
         }
     }
     
     @available(iOS 17.0, *)
     override func prepareInterfaceToProvideCredential(for credentialRequest: any ASCredentialRequest) {
+        NSLog("[CredentialProvider] prepareInterfaceToProvideCredential called: %@", String(describing: credentialRequest))
         guard let passkeyRequest = credentialRequest as? ASPasskeyCredentialRequest else {
             extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue, userInfo: [NSLocalizedDescriptionKey: "Invalid passkey assertion request"]))
             return
@@ -287,31 +301,49 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
         let passkeyIdentity = passkeyRequest.credentialIdentity as? ASPasskeyCredentialIdentity
         let rpId = passkeyIdentity?.relyingPartyIdentifier ?? passkeyRequest.credentialIdentity.serviceIdentifier.identifier
         let credentialId = passkeyIdentity?.credentialID ?? Data()
-        let userName = passkeyIdentity?.userName ?? "User"
+        let allowed = credentialId.isEmpty ? [] : [credentialId]
+        
+        handleAssertionFlow(rpId: rpId, clientDataHash: clientDataHash, allowedCredentialIds: allowed)
+    }
+    
+    @available(iOS 17.0, macOS 14.0, *)
+    private func handleAssertionFlow(rpId: String, clientDataHash: Data, allowedCredentialIds: [Data]) {
+        let allCreds = MyCredentialDataManager.shared.loadAll()
+        NSLog("[CredentialProvider] handleAssertionFlow: rpId=%@, clientDataHash len=%ld, stored creds=%ld",
+              rpId, clientDataHash.count, allCreds.count)
+        
+        let matchingCred: MyCredentialDataManager.Credential?
+        if !allowedCredentialIds.isEmpty {
+            matchingCred = allCreds.first(where: { allowedCredentialIds.contains($0.credentialId) })
+        } else {
+            matchingCred = allCreds.first(where: {
+                $0.rpid == rpId || rpId.hasSuffix($0.rpid) || $0.rpid.hasSuffix(rpId)
+            }) ?? allCreds.first
+        }
+        
+        guard let cred = matchingCred, let privateKey = cred.privateKey else {
+            NSLog("[CredentialProvider] No matching passkey found for rpId: %@", rpId)
+            subtitleLabel.text = "⚠️ パスキーがありません"
+            statusLabel.text = "サイト: \(rpId)\n利用可能なパスキーが見つかりませんでした。"
+            actionButton.isHidden = true
+            extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.credentialIdentityNotFound.rawValue, userInfo: [NSLocalizedDescriptionKey: "Passkey credential not found"]))
+            return
+        }
+        
+        let effectiveRpId = !rpId.isEmpty ? rpId : (cred.rpid.isEmpty ? "sp.exarnp1e.com" : cred.rpid)
+        let effectiveClientDataHash = clientDataHash.isEmpty ? Data(SHA256.hash(data: Data("fallback".utf8))) : clientDataHash
         
         subtitleLabel.text = "🔑 パスキーでログイン"
-        statusLabel.text = "サイト: \(rpId)\nアカウント: \(userName)"
+        statusLabel.text = "サイト: \(effectiveRpId)\nアカウント: \(cred.displayName)"
         actionButton.setTitle("ログイン", for: .normal)
         actionButton.isHidden = false
         
         self.pendingAction = { [weak self] in
             guard let self = self else { return }
-            
-            let allCreds = MyCredentialDataManager.shared.loadAll()
-            // Match by credentialId first, then by rpId
-            guard let cred = allCreds.first(where: { !credentialId.isEmpty && $0.credentialId == credentialId }) ??
-                             allCreds.first(where: { $0.rpid == rpId || rpId.hasSuffix($0.rpid) || $0.rpid.hasSuffix(rpId) }),
-                  let privateKey = cred.privateKey else {
-                print("[CredentialProvider] Credential not found for rpId: \(rpId), credId: \(credentialId.base64URLEncodedString())")
-                self.extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.credentialIdentityNotFound.rawValue, userInfo: [NSLocalizedDescriptionKey: "Passkey credential not found"]))
-                return
-            }
-            
-            let effectiveRpId = cred.rpid.isEmpty ? rpId : cred.rpid
             do {
                 let assertion = try DirectPasskeyCreator.generateAssertionSignature(
                     rpId: effectiveRpId,
-                    clientDataHash: clientDataHash,
+                    clientDataHash: effectiveClientDataHash,
                     privateKey: privateKey
                 )
                 
@@ -319,23 +351,23 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                     userHandle: cred.userHandle,
                     relyingParty: effectiveRpId,
                     signature: assertion.signature,
-                    clientDataHash: clientDataHash,
+                    clientDataHash: effectiveClientDataHash,
                     authenticatorData: assertion.authenticatorData,
                     credentialID: cred.credentialId
                 )
                 
-                print("[CredentialProvider] Completing passkey assertion for \(cred.displayName) on \(effectiveRpId)...")
+                NSLog("[CredentialProvider] Completing assertion for %@ on %@...", cred.displayName, effectiveRpId)
                 self.extensionContext.completeAssertionRequest(using: assertionCred) { expired in
-                    print("[CredentialProvider] Assertion request finished. Expired: \(expired)")
+                    NSLog("[CredentialProvider] Assertion request finished. Expired: %d", expired)
                 }
             } catch {
-                print("[CredentialProvider] Passkey assertion error: \(error)")
+                NSLog("[CredentialProvider] Passkey assertion error: %@", error.localizedDescription)
                 self.extensionContext.cancelRequest(withError: NSError(domain: ASExtensionErrorDomain, code: ASExtensionError.failed.rawValue, userInfo: [NSLocalizedDescriptionKey: error.localizedDescription]))
             }
         }
         
-        // Auto-fulfill after 0.4s to guarantee seamless flow
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+        // Auto-fulfill after 0.2s to guarantee seamless flow
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             self?.executePendingAction()
         }
     }

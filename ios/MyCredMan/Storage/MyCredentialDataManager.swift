@@ -15,6 +15,10 @@ public final class MyCredentialDataManager: ObservableObject {
     @Published public private(set) var credentials: [Credential] = []
     @Published public var isAutoFillEnabled: Bool = false
     
+    public var isRunningInExtension: Bool {
+        return Bundle.main.bundlePath.hasSuffix(".appex")
+    }
+    
     public init(userDefaults: UserDefaults? = nil) {
         let groupDefaults = UserDefaults(suiteName: MyCredentialDataManager.appGroupIdentifier)
         self.userDefaults = userDefaults ?? groupDefaults ?? .standard
@@ -27,8 +31,10 @@ public final class MyCredentialDataManager: ObservableObject {
         
         self.isAutoFillEnabled = self.userDefaults.bool(forKey: autoFillEnabledKey)
         self.credentials = loadAll()
-        checkAutoFillStatus()
-        syncWithSystemStore()
+        if !isRunningInExtension {
+            checkAutoFillStatus()
+            syncWithSystemStore()
+        }
     }
     
     // MARK: - Credential Model
@@ -79,7 +85,9 @@ public final class MyCredentialDataManager: ObservableObject {
         DispatchQueue.main.async {
             self.credentials = current
         }
-        syncWithSystemStore()
+        if !isRunningInExtension {
+            syncWithSystemStore()
+        }
     }
     
     public func reload() {
@@ -87,8 +95,10 @@ public final class MyCredentialDataManager: ObservableObject {
         DispatchQueue.main.async {
             self.credentials = loaded
         }
-        checkAutoFillStatus()
-        syncWithSystemStore()
+        if !isRunningInExtension {
+            checkAutoFillStatus()
+            syncWithSystemStore()
+        }
     }
     
     public func checkAutoFillStatus(completion: ((Bool) -> Void)? = nil) {
@@ -153,7 +163,9 @@ public final class MyCredentialDataManager: ObservableObject {
         DispatchQueue.main.async {
             self.credentials = current
         }
-        syncWithSystemStore()
+        if !isRunningInExtension {
+            syncWithSystemStore()
+        }
     }
     
     public func deleteAll() {
@@ -161,7 +173,9 @@ public final class MyCredentialDataManager: ObservableObject {
         DispatchQueue.main.async {
             self.credentials = []
         }
-        syncWithSystemStore()
+        if !isRunningInExtension {
+            syncWithSystemStore()
+        }
     }
     
     private func saveAll(_ list: [Credential]) {
@@ -175,12 +189,14 @@ public final class MyCredentialDataManager: ObservableObject {
         _ = UserDefaults.standard.synchronize()
         
         if let fileURL = containerFileURL {
+            try? FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
             try? data.write(to: fileURL, options: .atomic)
         }
     }
     
     // MARK: - ASCredentialIdentityStore Synchronization
     public func syncWithSystemStore() {
+        guard !isRunningInExtension else { return }
         if #available(iOS 17.0, macOS 14.0, *) {
             let loaded = loadAll()
             if loaded.isEmpty {
@@ -192,14 +208,32 @@ public final class MyCredentialDataManager: ObservableObject {
                     }
                 }
             } else {
-                let identities = loaded.map { cred in
-                    ASPasskeyCredentialIdentity(
-                        relyingPartyIdentifier: cred.rpid,
-                        userName: cred.displayName,
-                        credentialID: cred.credentialId,
-                        userHandle: cred.userHandle,
-                        recordIdentifier: cred.id
+                var identities: [ASPasskeyCredentialIdentity] = []
+                for cred in loaded {
+                    identities.append(
+                        ASPasskeyCredentialIdentity(
+                            relyingPartyIdentifier: cred.rpid,
+                            userName: cred.displayName,
+                            credentialID: cred.credentialId,
+                            userHandle: cred.userHandle,
+                            recordIdentifier: cred.id
+                        )
                     )
+                    // If rpid is a subdomain (e.g. sp.exarnp1e.com), also register with parent domain (e.g. exarnp1e.com)
+                    // so Safari's eTLD+1 matching can find it directly in the quick-auth sheet
+                    let parts = cred.rpid.split(separator: ".")
+                    if parts.count > 2 {
+                        let parentRpId = parts.dropFirst().joined(separator: ".")
+                        identities.append(
+                            ASPasskeyCredentialIdentity(
+                                relyingPartyIdentifier: parentRpId,
+                                userName: cred.displayName,
+                                credentialID: cred.credentialId,
+                                userHandle: cred.userHandle,
+                                recordIdentifier: "\(cred.id):\(parentRpId)"
+                            )
+                        )
+                    }
                 }
                 ASCredentialIdentityStore.shared.replaceCredentialIdentities(identities) { success, error in
                     if let error = error {
